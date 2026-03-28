@@ -45,8 +45,9 @@ async function handlePurchaseFixFiles() {
   purchasing.value = true
   try {
     const session = await createCheckoutSession('fix_files', scanId)
-    if (session.url) {
-      window.location.href = session.url
+    const url = session.checkout_url || session.url
+    if (url) {
+      window.location.href = url
     }
   } catch (e) {
     error.value = e.message || 'Could not create checkout session.'

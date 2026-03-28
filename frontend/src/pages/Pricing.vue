@@ -23,8 +23,9 @@ async function handleFixFiles() {
   error.value = ''
   try {
     const session = await createCheckoutSession('fix_files', null)
-    if (session.url) {
-      window.location.href = session.url
+    const url = session.checkout_url || session.url
+    if (url) {
+      window.location.href = url
     }
   } catch (e) {
     error.value = e.message || 'Could not start checkout.'
@@ -42,8 +43,9 @@ async function handlePro() {
   error.value = ''
   try {
     const session = await createCheckoutSession('pro', null)
-    if (session.url) {
-      window.location.href = session.url
+    const url = session.checkout_url || session.url
+    if (url) {
+      window.location.href = url
     }
   } catch (e) {
     error.value = e.message || 'Could not start checkout.'

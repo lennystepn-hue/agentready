@@ -1,8 +1,8 @@
 # AgentReady
 
-**Wie findbar ist dein Shop für AI Agents?**
+**How discoverable is your shop for AI Agents?**
 
-Free Scanner Tool das Websites auf ihre Auffindbarkeit und Transaktionsfähigkeit für AI Shopping Agents prüft und einen Score + Fixes liefert.
+Free scanner tool that checks websites for their discoverability and transaction readiness for AI shopping agents, providing a score and actionable fixes.
 
 ## Features
 

@@ -360,11 +360,16 @@ onMounted(async () => {
               <p class="text-xs text-secondary">Track your score improvements over time.</p>
               <span v-if="!isPro" class="text-[10px] text-muted font-display uppercase tracking-wider mt-2 inline-block">Pro</span>
             </router-link>
-            <div class="border border-border rounded-lg p-5 bg-surface hover:border-warm-300 transition-colors group cursor-default">
+            <router-link
+              :to="completedScans.length > 0 ? { name: 'Report', params: { id: completedScans[0].scan_id }, hash: '#discovery' } : '/'"
+              class="border border-border rounded-lg p-5 bg-surface hover:border-warm-300 transition-colors group"
+            >
               <h4 class="font-display font-semibold text-sm text-primary group-hover:text-accent transition-colors mb-1">AI Discovery Test</h4>
               <p class="text-xs text-secondary">Check if AI agents actually recommend your store.</p>
-              <span v-if="!isPro" class="text-[10px] text-muted font-display uppercase tracking-wider mt-2 inline-block">Pro</span>
-            </div>
+              <span class="text-[10px] font-display uppercase tracking-wider mt-2 inline-block" :class="isPro ? 'text-accent' : 'text-muted'">
+                {{ completedScans.length > 0 ? 'Run test →' : 'Scan first' }}
+              </span>
+            </router-link>
           </div>
         </section>
       </div>

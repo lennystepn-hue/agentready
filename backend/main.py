@@ -459,6 +459,24 @@ async def create_checkout(
     return {"checkout_url": checkout_url}
 
 
+@app.post("/api/billing/portal")
+async def create_billing_portal(user: dict = Depends(get_current_user)):
+    """Creates a Stripe Billing Portal session for subscription management."""
+    import stripe
+    import os
+    stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "")
+
+    user_data = await get_user_by_id(user["id"])
+    if not user_data or not user_data.get("stripe_customer_id"):
+        raise HTTPException(status_code=400, detail="No active subscription found.")
+
+    session = stripe.billing_portal.Session.create(
+        customer=user_data["stripe_customer_id"],
+        return_url=os.environ.get("FRONTEND_URL", "http://localhost:5173") + "/dashboard",
+    )
+    return {"portal_url": session.url}
+
+
 @app.post("/api/stripe/webhook")
 async def stripe_webhook(request: Request):
     payload = await request.body()

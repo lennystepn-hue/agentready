@@ -113,3 +113,8 @@ export function compareDomains(domains) {
 export function getScoreHistory(domain) {
   return request('GET', `/api/history/${encodeURIComponent(domain)}`)
 }
+
+// Billing portal
+export function createBillingPortal() {
+  return request('POST', '/api/billing/portal')
+}

@@ -2,8 +2,9 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { isLoggedIn, isPro, user, logout } from '../auth.js'
-import { getUserScans, getMonitors, createCheckoutSession } from '../api.js'
+import { getUserScans, getMonitors, createCheckoutSession, createBillingPortal } from '../api.js'
 import ScoreCircle from '../components/ScoreCircle.vue'
+import AppLayout from '../components/AppLayout.vue'
 
 const router = useRouter()
 
@@ -13,6 +14,7 @@ const loadingScans = ref(true)
 const loadingMonitors = ref(false)
 const error = ref('')
 const upgrading = ref(false)
+const managingBilling = ref(false)
 
 function gradeFor(score) {
   if (score == null) return '—'
@@ -39,11 +41,6 @@ function formatDate(dateStr) {
   })
 }
 
-function handleLogout() {
-  logout()
-  router.push('/')
-}
-
 async function handleUpgrade() {
   upgrading.value = true
   try {
@@ -54,6 +51,20 @@ async function handleUpgrade() {
     error.value = e.message || 'Could not start checkout.'
   } finally {
     upgrading.value = false
+  }
+}
+
+async function handleManageSubscription() {
+  managingBilling.value = true
+  try {
+    const data = await createBillingPortal()
+    if (data.portal_url) {
+      window.location.href = data.portal_url
+    }
+  } catch (e) {
+    error.value = e.message || 'Could not open billing portal.'
+  } finally {
+    managingBilling.value = false
   }
 }
 
@@ -110,33 +121,8 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex-1 flex flex-col">
-    <!-- Nav -->
-    <nav class="sticky top-0 z-50 bg-page/95 backdrop-blur-sm border-b border-border-light">
-      <div class="max-w-5xl mx-auto px-6 lg:px-8 h-14 flex items-center justify-between">
-        <router-link to="/" class="flex items-center gap-2">
-          <svg class="w-5 h-5 text-accent" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2L4 20h4l1.5-4h5L16 20h4L12 2zm0 7l2 5h-4l2-5z" fill="currentColor"/>
-            <path d="M20 8a10 10 0 00-4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
-            <path d="M22 6a14 14 0 00-6-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
-          </svg>
-          <span class="font-display font-bold text-[15px] tracking-tight">AgentCheck</span>
-        </router-link>
-        <div class="flex items-center gap-4">
-          <router-link to="/" class="text-[13px] text-secondary hover:text-primary transition-colors">Scanner</router-link>
-          <router-link to="/pricing" class="text-[13px] text-secondary hover:text-primary transition-colors">Pricing</router-link>
-          <button @click="handleLogout" class="text-[13px] text-secondary hover:text-primary transition-colors">Sign out</button>
-          <div
-            class="w-7 h-7 rounded-full bg-accent text-white flex items-center justify-center text-xs font-display font-bold"
-            :title="user?.email"
-          >
-            {{ user?.email?.[0]?.toUpperCase() || '?' }}
-          </div>
-        </div>
-      </div>
-    </nav>
-
-    <div class="flex-1">
+  <AppLayout>
+    <div class="flex-1 pb-16 sm:pb-0">
       <!-- Header -->
       <div class="border-b border-border-light bg-warm-50">
         <div class="max-w-5xl mx-auto px-6 lg:px-8 py-8 animate-fade-in">
@@ -154,9 +140,25 @@ onMounted(async () => {
               <p class="text-sm text-secondary">{{ user?.email }}</p>
             </div>
             <div class="flex gap-3">
+              <template v-if="isPro">
+                <button
+                  @click="handleManageSubscription"
+                  :disabled="managingBilling"
+                  class="btn-secondary text-sm"
+                >
+                  {{ managingBilling ? 'Loading...' : 'Manage subscription' }}
+                </button>
+              </template>
               <router-link to="/" class="btn-primary text-sm">Run new scan</router-link>
               <router-link v-if="isPro" to="/compare" class="btn-secondary text-sm">Compare</router-link>
             </div>
+          </div>
+          <!-- Pro plan active badge -->
+          <div v-if="isPro" class="mt-3 flex items-center gap-2 text-sm text-accent">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span class="font-display font-medium">Pro plan active</span>
           </div>
         </div>
       </div>
@@ -342,13 +344,5 @@ onMounted(async () => {
         </section>
       </div>
     </div>
-
-    <!-- Footer -->
-    <footer class="border-t border-border-light py-6 px-6 lg:px-8 mt-auto">
-      <div class="max-w-5xl mx-auto flex items-center justify-between">
-        <span class="text-xs text-muted">&copy; {{ new Date().getFullYear() }} AgentCheck</span>
-        <a href="https://github.com/lennystepn-hue/agentready" target="_blank" rel="noopener" class="text-xs text-secondary hover:text-primary transition-colors">GitHub</a>
-      </div>
-    </footer>
-  </div>
+  </AppLayout>
 </template>

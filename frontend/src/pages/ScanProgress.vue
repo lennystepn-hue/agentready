@@ -101,6 +101,12 @@ onUnmounted(() => {
           </svg>
           <span class="font-display font-bold text-[15px] tracking-tight">AgentCheck</span>
         </router-link>
+        <router-link to="/" class="btn-ghost text-[13px]">
+          <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to home
+        </router-link>
       </div>
     </nav>
 

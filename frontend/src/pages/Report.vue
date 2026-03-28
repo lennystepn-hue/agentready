@@ -169,6 +169,18 @@ onMounted(fetchReport)
           <span class="font-display font-bold text-[15px] tracking-tight">AgentCheck</span>
         </router-link>
         <div class="flex items-center gap-1">
+          <router-link v-if="isLoggedIn" to="/dashboard" class="btn-ghost">
+            <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to dashboard
+          </router-link>
+          <router-link v-else to="/" class="btn-ghost">
+            <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to home
+          </router-link>
           <router-link to="/pricing" class="btn-ghost">Pricing</router-link>
           <button @click="shareReport" class="btn-ghost">
             <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

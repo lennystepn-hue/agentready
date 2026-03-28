@@ -5,6 +5,7 @@ import { isLoggedIn, isPro, user, logout } from '../auth.js'
 import { compareDomains } from '../api.js'
 import ScoreCircle from '../components/ScoreCircle.vue'
 import CategoryBar from '../components/CategoryBar.vue'
+import AppLayout from '../components/AppLayout.vue'
 
 const router = useRouter()
 
@@ -13,11 +14,6 @@ const competitors = ref(['', '', ''])
 const results = ref(null)
 const loading = ref(false)
 const error = ref('')
-
-function handleLogout() {
-  logout()
-  router.push('/')
-}
 
 async function handleCompare() {
   const domains = [yourDomain.value.trim(), ...competitors.value.map(c => c.trim())].filter(Boolean)
@@ -45,34 +41,8 @@ function scoreColorBorder(score) {
 </script>
 
 <template>
-  <div class="flex-1 flex flex-col">
-    <!-- Nav -->
-    <nav class="sticky top-0 z-50 bg-page/95 backdrop-blur-sm border-b border-border-light">
-      <div class="max-w-5xl mx-auto px-6 lg:px-8 h-14 flex items-center justify-between">
-        <router-link to="/" class="flex items-center gap-2">
-          <svg class="w-5 h-5 text-accent" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2L4 20h4l1.5-4h5L16 20h4L12 2zm0 7l2 5h-4l2-5z" fill="currentColor"/>
-            <path d="M20 8a10 10 0 00-4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
-            <path d="M22 6a14 14 0 00-6-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
-          </svg>
-          <span class="font-display font-bold text-[15px] tracking-tight">AgentCheck</span>
-        </router-link>
-        <div class="flex items-center gap-4">
-          <router-link to="/dashboard" class="text-[13px] text-secondary hover:text-primary transition-colors">Dashboard</router-link>
-          <router-link to="/pricing" class="text-[13px] text-secondary hover:text-primary transition-colors">Pricing</router-link>
-          <button @click="handleLogout" class="btn-ghost text-[13px]">Sign out</button>
-          <div
-            class="w-7 h-7 rounded-full bg-accent text-white flex items-center justify-center text-xs font-display font-bold"
-            :title="user?.email"
-          >
-            {{ user?.email?.[0]?.toUpperCase() || '?' }}
-          </div>
-        </div>
-      </div>
-    </nav>
-
-    <!-- Content -->
-    <div class="flex-1">
+  <AppLayout>
+    <div class="flex-1 pb-16 sm:pb-0">
       <div class="max-w-5xl mx-auto px-6 lg:px-8 py-10">
 
         <div class="animate-fade-in mb-8">
@@ -163,20 +133,5 @@ function scoreColorBorder(score) {
         </div>
       </div>
     </div>
-
-    <!-- Footer -->
-    <footer class="border-t border-border-light py-6 px-6 lg:px-8 mt-auto">
-      <div class="max-w-5xl mx-auto flex items-center justify-between">
-        <span class="text-xs text-muted">&copy; {{ new Date().getFullYear() }} AgentCheck</span>
-        <a
-          href="https://github.com/lennystepn-hue/agentready"
-          target="_blank"
-          rel="noopener"
-          class="text-xs text-secondary hover:text-primary transition-colors"
-        >
-          GitHub
-        </a>
-      </div>
-    </footer>
-  </div>
+  </AppLayout>
 </template>

@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getScanResult, getScanAccess, createCheckoutSession, downloadFixFiles } from '../api.js'
+import { getScanResult, getScanAccess, createCheckoutSession, downloadFixFiles, runDiscoveryTest } from '../api.js'
 import { isLoggedIn, isPro, user, logout } from '../auth.js'
 import ScoreCircle from '../components/ScoreCircle.vue'
 import CategoryBar from '../components/CategoryBar.vue'
@@ -22,6 +22,24 @@ const hasFixAccess = ref(false)
 const checkingAccess = ref(false)
 const purchasing = ref(false)
 const downloading = ref(false)
+
+// AI Discovery state
+const discoveryResult = ref(null)
+const discoveryLoading = ref(false)
+const discoveryError = ref('')
+
+async function handleRunDiscovery() {
+  discoveryLoading.value = true
+  discoveryError.value = ''
+  try {
+    const result = await runDiscoveryTest(scanId)
+    discoveryResult.value = result
+  } catch (e) {
+    discoveryError.value = e.message || 'Could not run discovery test.'
+  } finally {
+    discoveryLoading.value = false
+  }
+}
 
 function handleLogout() {
   logout()
@@ -305,6 +323,113 @@ onMounted(fetchReport)
               </Transition>
             </div>
           </div>
+        </section>
+
+        <!-- ─── AI Discovery Test ─── -->
+        <section class="mb-14 animate-slide-up" style="animation-delay: 120ms">
+          <div class="flex items-center gap-3 mb-1">
+            <h2 class="font-display text-lg font-bold tracking-tight">AI Discovery Test</h2>
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-display font-bold uppercase tracking-wider bg-accent/10 text-accent">Beta</span>
+          </div>
+          <p class="text-sm text-secondary mb-5">We query real AI assistants to check if they know about your store.</p>
+
+          <!-- Pro user: can run the test -->
+          <template v-if="isPro">
+            <!-- Not run yet -->
+            <div v-if="!discoveryResult && !discoveryLoading && !discoveryError" class="border border-border rounded-lg p-6 bg-surface">
+              <p class="text-sm text-secondary mb-4">Run a discovery test to see if AI agents like ChatGPT, Claude, and Perplexity mention your store when asked shopping-related questions.</p>
+              <button @click="handleRunDiscovery" class="btn-primary">
+                Run discovery test
+              </button>
+            </div>
+
+            <!-- Loading -->
+            <div v-if="discoveryLoading" class="border border-border rounded-lg p-6 bg-surface text-center">
+              <svg class="w-5 h-5 text-accent animate-spin mx-auto mb-3" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              <p class="text-sm text-secondary">Querying AI providers... This may take a minute.</p>
+            </div>
+
+            <!-- Error -->
+            <div v-if="discoveryError" class="border border-score-bad/20 rounded-lg p-5 bg-score-bad/[0.03]">
+              <p class="text-sm text-score-bad mb-3">{{ discoveryError }}</p>
+              <button @click="handleRunDiscovery" class="btn-secondary text-sm">Try again</button>
+            </div>
+
+            <!-- Results -->
+            <div v-if="discoveryResult" class="border border-border rounded-lg overflow-hidden">
+              <!-- Score header -->
+              <div class="px-6 py-5 bg-surface border-b border-border-light flex items-center gap-6">
+                <div class="flex-shrink-0">
+                  <div
+                    class="w-16 h-16 rounded-full border-[3px] flex items-center justify-center"
+                    :class="{
+                      'border-score-good': discoveryResult.discovery_score >= 60,
+                      'border-score-medium': discoveryResult.discovery_score >= 30 && discoveryResult.discovery_score < 60,
+                      'border-score-bad': discoveryResult.discovery_score < 30,
+                    }"
+                  >
+                    <span
+                      class="font-display font-bold text-xl"
+                      :class="{
+                        'text-score-good': discoveryResult.discovery_score >= 60,
+                        'text-score-medium': discoveryResult.discovery_score >= 30 && discoveryResult.discovery_score < 60,
+                        'text-score-bad': discoveryResult.discovery_score < 30,
+                      }"
+                    >{{ discoveryResult.discovery_score }}%</span>
+                  </div>
+                </div>
+                <div>
+                  <p class="font-display font-semibold text-primary">Discovery Score</p>
+                  <p class="text-sm text-secondary mt-0.5">Found in {{ discoveryResult.queries_found }} of {{ discoveryResult.queries_tested }} AI queries</p>
+                </div>
+              </div>
+              <!-- Summary -->
+              <div class="px-6 py-4 bg-warm-50 border-b border-border-light">
+                <p class="text-sm text-secondary leading-relaxed">{{ discoveryResult.summary }}</p>
+              </div>
+              <!-- Individual results -->
+              <div class="divide-y divide-border-light">
+                <div v-for="(r, idx) in discoveryResult.results" :key="idx" class="px-6 py-4">
+                  <div class="flex items-start gap-3">
+                    <div class="flex-shrink-0 mt-0.5">
+                      <span v-if="r.found" class="inline-flex w-5 h-5 rounded-full bg-score-good/10 items-center justify-center">
+                        <svg class="w-3 h-3 text-score-good" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </span>
+                      <span v-else class="inline-flex w-5 h-5 rounded-full bg-score-bad/10 items-center justify-center">
+                        <svg class="w-3 h-3 text-score-bad" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </span>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <p class="text-sm font-display font-medium text-primary">"{{ r.query }}"</p>
+                      <div class="flex items-center gap-2 mt-1">
+                        <span class="text-[11px] font-display uppercase tracking-wider px-1.5 py-0.5 rounded bg-warm-100 text-muted">{{ r.provider }}</span>
+                        <span class="text-xs" :class="r.found ? 'text-score-good' : 'text-score-bad'">{{ r.found ? 'Found' : 'Not found' }}</span>
+                      </div>
+                      <p class="text-xs text-muted mt-1.5 leading-relaxed">{{ r.context }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <!-- Non-Pro user: teaser -->
+          <template v-else>
+            <div class="border border-accent/20 rounded-lg p-6 bg-accent/[0.03]">
+              <p class="text-sm text-secondary mb-2">
+                With the AI Discovery Test, we query ChatGPT, Claude, and Perplexity with real shopping queries and check if your store actually appears in the responses. See exactly where you are found and where you are not.
+              </p>
+              <p class="text-xs text-muted mb-4">Available on the Pro plan.</p>
+              <router-link to="/pricing" class="btn-primary text-sm">Upgrade to Pro</router-link>
+            </div>
+          </template>
         </section>
 
         <!-- ─── Fix Files CTA ─── -->

@@ -118,3 +118,12 @@ export function getScoreHistory(domain) {
 export function createBillingPortal() {
   return request('POST', '/api/billing/portal')
 }
+
+// AI Discovery
+export function runDiscoveryTest(scanId) {
+  return request('POST', `/api/scan/${scanId}/discovery`)
+}
+
+export function quickDiscovery(domain) {
+  return request('POST', '/api/discovery/quick', { domain })
+}

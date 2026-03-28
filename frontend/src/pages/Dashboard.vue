@@ -344,7 +344,7 @@ onMounted(async () => {
 
         <!-- Quick links -->
         <section class="animate-slide-up" style="animation-delay: 200ms">
-          <div class="grid sm:grid-cols-3 gap-4">
+          <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <router-link to="/compare" class="border border-border rounded-lg p-5 bg-surface hover:border-warm-300 transition-colors group">
               <h4 class="font-display font-semibold text-sm text-primary group-hover:text-accent transition-colors mb-1">Compare competitors</h4>
               <p class="text-xs text-secondary">Side-by-side comparison of up to 4 domains.</p>
@@ -360,6 +360,11 @@ onMounted(async () => {
               <p class="text-xs text-secondary">Track your score improvements over time.</p>
               <span v-if="!isPro" class="text-[10px] text-muted font-display uppercase tracking-wider mt-2 inline-block">Pro</span>
             </router-link>
+            <div class="border border-border rounded-lg p-5 bg-surface hover:border-warm-300 transition-colors group cursor-default">
+              <h4 class="font-display font-semibold text-sm text-primary group-hover:text-accent transition-colors mb-1">AI Discovery Test</h4>
+              <p class="text-xs text-secondary">Check if AI agents actually recommend your store.</p>
+              <span v-if="!isPro" class="text-[10px] text-muted font-display uppercase tracking-wider mt-2 inline-block">Pro</span>
+            </div>
           </div>
         </section>
       </div>

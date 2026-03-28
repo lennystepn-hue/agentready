@@ -334,7 +334,7 @@ function toggleFaq(idx) {
           With a Pro subscription, we don't just tell you what's broken. We help you fix it and continuously optimize your shop's AI visibility.
         </p>
 
-        <div class="grid sm:grid-cols-3 gap-10">
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
           <div class="border-l-2 border-accent pl-5">
             <span class="inline-block font-display font-bold text-accent text-sm mb-2">01</span>
             <h3 class="font-display font-semibold text-primary mb-2">Deploy fix files automatically</h3>
@@ -354,6 +354,13 @@ function toggleFaq(idx) {
             <h3 class="font-display font-semibold text-primary mb-2">Weekly re-scans & alerts</h3>
             <p class="text-sm text-secondary leading-relaxed">
               Your score is re-checked every week. When something breaks or improves, you're the first to know. Stay ahead as AI commerce standards evolve.
+            </p>
+          </div>
+          <div class="border-l-2 border-accent pl-5">
+            <span class="inline-block font-display font-bold text-accent text-sm mb-2">04</span>
+            <h3 class="font-display font-semibold text-primary mb-2">AI Discovery Test</h3>
+            <p class="text-sm text-secondary leading-relaxed">
+              We query ChatGPT, Claude, and Perplexity with real shopping queries to check if your store actually appears in AI responses. See exactly where you're found — and where you're not.
             </p>
           </div>
         </div>

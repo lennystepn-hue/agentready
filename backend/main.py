@@ -44,6 +44,7 @@ from auth import (
 )
 from payments import create_checkout_session, handle_webhook_event
 from monitoring import run_monitoring_cycle
+from ai_discovery import run_discovery_test
 
 logging.basicConfig(
     level=logging.INFO,
@@ -638,6 +639,52 @@ async def get_pricing():
                 ],
             },
         ]
+    }
+
+
+# ---------------------------------------------------------------------------
+# AI Discovery Test
+# ---------------------------------------------------------------------------
+
+@app.post("/api/scan/{scan_id}/discovery")
+async def run_ai_discovery(scan_id: str, user: dict = Depends(get_current_user)):
+    """Run AI discovery test for a completed scan. Pro feature."""
+    user_data = await get_user_by_id(user["id"])
+    if not user_data or user_data.get("plan") != "pro":
+        raise HTTPException(status_code=403, detail="AI Discovery Test is a Pro feature.")
+
+    scan = await get_scan(scan_id)
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan not found.")
+    if scan["status"] != "completed":
+        raise HTTPException(status_code=400, detail="Scan must be completed first.")
+
+    # Extract product hints from scan results if available
+    product_hints = []
+    if scan.get("report_json"):
+        try:
+            report = json.loads(scan["report_json"])
+            # Try to get product-related info from checks
+        except:
+            pass
+
+    result = await run_discovery_test(scan["domain"], product_hints)
+    return result
+
+
+@app.post("/api/discovery/quick")
+async def quick_discovery(body: ScanRequest):
+    """Quick discovery test (limited, no auth needed)."""
+    domain = body.domain
+    result = await run_discovery_test(domain)
+    # Only return summary for free users
+    return {
+        "domain": result["domain"],
+        "discovery_score": result["discovery_score"],
+        "summary": result["summary"],
+        "queries_tested": result["queries_tested"],
+        "queries_found": result["queries_found"],
+        # Don't include detailed results for free
     }
 
 

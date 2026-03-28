@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getScanResult, getScanAccess, createCheckoutSession, downloadFixFiles, runDiscoveryTest } from '../api.js'
+import { getScanResult, getScanAccess, createCheckoutSession, downloadFixFiles, runDiscoveryTest, getScanInsights } from '../api.js'
 import { isLoggedIn, isPro, user, logout } from '../auth.js'
 import ScoreCircle from '../components/ScoreCircle.vue'
 import CategoryBar from '../components/CategoryBar.vue'
@@ -23,10 +23,33 @@ const checkingAccess = ref(false)
 const purchasing = ref(false)
 const downloading = ref(false)
 
+// AI Insights state
+const insights = ref(null)
+const loadingInsights = ref(false)
+
 // AI Discovery state
 const discoveryResult = ref(null)
 const discoveryLoading = ref(false)
 const discoveryError = ref('')
+
+async function loadInsights() {
+  loadingInsights.value = true
+  try {
+    const data = await getScanInsights(scanId)
+    insights.value = data.insights
+  } catch (e) {
+    insights.value = { error: e.message || 'Could not load insights.' }
+  } finally {
+    loadingInsights.value = false
+  }
+}
+
+function scanCompetitors() {
+  if (insights.value?.competitors) {
+    const domains = [scan.value.domain, ...insights.value.competitors.slice(0, 3)]
+    router.push({ name: 'Compare', query: { domains: domains.join(',') } })
+  }
+}
 
 async function handleRunDiscovery() {
   discoveryLoading.value = true
@@ -149,6 +172,10 @@ async function fetchReport() {
       return
     }
     scan.value = result
+    // Auto-load AI insights for Pro users
+    if (isPro.value) {
+      loadInsights()
+    }
     // Expand categories that have failures by default
     for (const cat of categories.value) {
       if (cat.checks.some(c => c.status === 'fail')) {
@@ -264,6 +291,77 @@ onMounted(fetchReport)
       </div>
 
       <div class="max-w-4xl mx-auto px-6 lg:px-8 py-10">
+
+        <!-- ─── AI Insights (Pro) ─── -->
+        <section v-if="isLoggedIn" class="mb-14 animate-slide-up">
+          <div class="flex items-center gap-2 mb-4">
+            <h2 class="font-display text-lg font-bold tracking-tight">AI Insights</h2>
+            <span class="text-[10px] font-display font-bold text-white bg-accent px-1.5 py-0.5 rounded uppercase tracking-wider">Pro</span>
+          </div>
+
+          <div v-if="!isPro" class="border border-accent/20 rounded-lg p-5 bg-accent/[0.03]">
+            <p class="text-sm text-secondary mb-3">Get AI-powered competitor analysis, smart recommendations, and visibility assessment.</p>
+            <router-link to="/pricing" class="btn-primary text-sm">Upgrade to Pro</router-link>
+          </div>
+
+          <div v-else>
+            <button v-if="!insights && !loadingInsights" @click="loadInsights" class="btn-secondary text-sm">
+              Generate AI insights
+            </button>
+
+            <div v-if="loadingInsights" class="flex items-center gap-2 text-sm text-secondary">
+              <svg class="w-4 h-4 animate-spin text-accent" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              Analyzing with AI...
+            </div>
+
+            <div v-if="insights && !insights.error" class="space-y-6">
+              <!-- Visibility Summary -->
+              <div class="border-l-2 border-accent pl-4">
+                <p class="text-sm text-primary leading-relaxed">{{ insights.visibility_summary }}</p>
+                <p v-if="insights.estimated_improvement" class="text-xs text-accent mt-1 font-display font-medium">
+                  Estimated improvement: {{ insights.estimated_improvement }}
+                </p>
+              </div>
+
+              <!-- Priority Actions -->
+              <div v-if="insights.priority_actions?.length">
+                <p class="section-label mb-2">Priority actions</p>
+                <ol class="space-y-2">
+                  <li v-for="(action, idx) in insights.priority_actions" :key="idx" class="flex gap-3 text-sm">
+                    <span class="flex-shrink-0 w-5 h-5 rounded-full bg-accent text-white text-xs font-display font-bold flex items-center justify-center">{{ idx + 1 }}</span>
+                    <span class="text-secondary leading-relaxed">{{ action }}</span>
+                  </li>
+                </ol>
+              </div>
+
+              <!-- Competitors -->
+              <div v-if="insights.competitors?.length">
+                <div class="flex items-center justify-between mb-2">
+                  <p class="section-label">Detected competitors</p>
+                  <button @click="scanCompetitors" class="text-xs text-accent hover:text-accent-hover font-display font-medium">
+                    Compare all →
+                  </button>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  <span v-for="comp in insights.competitors" :key="comp"
+                    class="inline-flex items-center text-xs font-display bg-warm-100 text-secondary px-2.5 py-1 rounded-md">
+                    {{ comp }}
+                  </span>
+                </div>
+                <p v-if="insights.market_segment" class="text-xs text-muted mt-2">
+                  Market: {{ insights.market_segment }}
+                </p>
+              </div>
+            </div>
+
+            <div v-if="insights?.error" class="text-sm text-score-bad">
+              {{ insights.error }}
+            </div>
+          </div>
+        </section>
 
         <!-- ─── Top Fixes ─── -->
         <section v-if="topFixes.length > 0" class="mb-14 animate-slide-up">

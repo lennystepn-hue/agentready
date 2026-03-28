@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { isLoggedIn, isPro, user, logout } from '../auth.js'
 import { compareDomains, getUserScans } from '../api.js'
 import ScoreCircle from '../components/ScoreCircle.vue'
@@ -8,6 +8,7 @@ import CategoryBar from '../components/CategoryBar.vue'
 import AppLayout from '../components/AppLayout.vue'
 
 const router = useRouter()
+const route = useRoute()
 
 const yourDomain = ref('')
 const competitors = ref(['', '', ''])
@@ -124,8 +125,18 @@ onMounted(async () => {
     const raw = Array.isArray(data) ? data : (data.scans || [])
     allScans.value = raw.map(normalizeScan).sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
 
-    // Pre-fill the first domain with the most recently scanned domain
-    if (!yourDomain.value && allScans.value.length > 0) {
+    // Pre-fill from query params (e.g. from AI insights "Compare all" button)
+    if (route.query.domains) {
+      const domainList = route.query.domains.split(',')
+      domainList.forEach((d, i) => {
+        if (i === 0) {
+          yourDomain.value = d
+        } else if (i - 1 < competitors.value.length) {
+          competitors.value[i - 1] = d
+        }
+      })
+    } else if (!yourDomain.value && allScans.value.length > 0) {
+      // Pre-fill the first domain with the most recently scanned domain
       yourDomain.value = allScans.value[0].domain
     }
   } catch {

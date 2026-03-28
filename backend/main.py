@@ -32,6 +32,8 @@ from db import (
     delete_monitor,
     create_comparison,
     get_user_comparisons,
+    get_scan_insights,
+    save_scan_insights,
 )
 from scanner.orchestrator import run_scan
 from fix_generator import generate_fixes
@@ -45,6 +47,7 @@ from auth import (
 from payments import create_checkout_session, handle_webhook_event
 from monitoring import run_monitoring_cycle
 from ai_discovery import run_discovery_test
+from ai_insights import generate_scan_insights
 
 logging.basicConfig(
     level=logging.INFO,
@@ -640,6 +643,45 @@ async def get_pricing():
             },
         ]
     }
+
+
+# ---------------------------------------------------------------------------
+# AI Insights (Pro only)
+# ---------------------------------------------------------------------------
+
+@app.get("/api/scan/{scan_id}/insights")
+async def get_insights(scan_id: str, user: dict = Depends(get_current_user)):
+    """Get AI-powered insights for a scan. Pro feature. Results are cached."""
+    user_data = await get_user_by_id(user["id"])
+    if not user_data or user_data.get("plan") != "pro":
+        raise HTTPException(status_code=403, detail="AI Insights is a Pro feature.")
+
+    scan = await get_scan(scan_id)
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan not found.")
+    if scan["status"] != "completed":
+        raise HTTPException(status_code=400, detail="Scan must be completed.")
+
+    # Check cache first
+    cached = await get_scan_insights(scan_id)
+    if cached and "error" not in cached:
+        return {"insights": cached, "cached": True}
+
+    # Generate new insights
+    report = {}
+    if scan.get("report_json"):
+        try:
+            report = json.loads(scan["report_json"])
+        except:
+            pass
+
+    insights = await generate_scan_insights(scan["domain"], report)
+
+    # Cache if successful
+    if "error" not in insights:
+        await save_scan_insights(scan_id, insights)
+
+    return {"insights": insights, "cached": False}
 
 
 # ---------------------------------------------------------------------------

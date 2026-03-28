@@ -94,6 +94,13 @@ async def init_db() -> None:
         except Exception:
             pass
 
+        # Add ai_insights_json column to scans if it doesn't exist yet
+        try:
+            await db.execute("ALTER TABLE scans ADD COLUMN ai_insights_json TEXT")
+            await db.commit()
+        except Exception:
+            pass
+
     finally:
         await db.close()
 
@@ -388,6 +395,32 @@ async def delete_monitor(monitor_id: str, user_id: str) -> None:
         await db.execute(
             "UPDATE monitoring SET is_active = 0 WHERE id = ? AND user_id = ?",
             (monitor_id, user_id),
+        )
+        await db.commit()
+    finally:
+        await db.close()
+
+
+async def get_scan_insights(scan_id: str) -> dict | None:
+    """Get cached AI insights for a scan."""
+    db = await get_db()
+    try:
+        cursor = await db.execute("SELECT ai_insights_json FROM scans WHERE id = ?", (scan_id,))
+        row = await cursor.fetchone()
+        if row and row["ai_insights_json"]:
+            return json.loads(row["ai_insights_json"])
+        return None
+    finally:
+        await db.close()
+
+
+async def save_scan_insights(scan_id: str, insights: dict) -> None:
+    """Cache AI insights for a scan."""
+    db = await get_db()
+    try:
+        await db.execute(
+            "UPDATE scans SET ai_insights_json = ? WHERE id = ?",
+            (json.dumps(insights), scan_id),
         )
         await db.commit()
     finally:

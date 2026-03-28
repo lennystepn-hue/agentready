@@ -119,6 +119,11 @@ export function createBillingPortal() {
   return request('POST', '/api/billing/portal')
 }
 
+// AI Insights
+export function getScanInsights(scanId) {
+  return request('GET', `/api/scan/${scanId}/insights`)
+}
+
 // AI Discovery
 export function runDiscoveryTest(scanId) {
   return request('POST', `/api/scan/${scanId}/discovery`)

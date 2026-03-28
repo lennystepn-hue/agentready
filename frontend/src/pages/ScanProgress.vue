@@ -99,7 +99,7 @@ onUnmounted(() => {
             <path d="M20 8a10 10 0 00-4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
             <path d="M22 6a14 14 0 00-6-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
           </svg>
-          <span class="font-display font-bold text-[15px] tracking-tight">AgentReady</span>
+          <span class="font-display font-bold text-[15px] tracking-tight">AgentCheck</span>
         </router-link>
       </div>
     </nav>

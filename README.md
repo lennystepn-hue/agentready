@@ -1,4 +1,4 @@
-# AgentReady
+# AgentCheck
 
 **How discoverable is your shop for AI Agents?**
 

@@ -64,7 +64,7 @@ async function handlePro() {
             <path d="M20 8a10 10 0 00-4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
             <path d="M22 6a14 14 0 00-6-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
           </svg>
-          <span class="font-display font-bold text-[15px] tracking-tight">AgentReady</span>
+          <span class="font-display font-bold text-[15px] tracking-tight">AgentCheck</span>
         </router-link>
         <div class="flex items-center gap-4">
           <router-link to="/" class="text-[13px] text-secondary hover:text-primary transition-colors">Home</router-link>
@@ -493,7 +493,7 @@ async function handlePro() {
             <path d="M20 8a10 10 0 00-4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
             <path d="M22 6a14 14 0 00-6-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
           </svg>
-          AgentReady
+          AgentCheck
         </router-link>
         <div class="flex items-center gap-5 text-xs text-muted">
           <a
@@ -504,7 +504,7 @@ async function handlePro() {
           >
             GitHub
           </a>
-          <span>&copy; {{ new Date().getFullYear() }} AgentReady</span>
+          <span>&copy; {{ new Date().getFullYear() }} AgentCheck</span>
         </div>
       </div>
     </footer>

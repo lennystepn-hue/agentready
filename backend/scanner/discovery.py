@@ -6,7 +6,7 @@ from xml.etree import ElementTree
 import httpx
 from bs4 import BeautifulSoup
 
-USER_AGENT = "AgentReady-Scanner/1.0 (Readiness Check)"
+USER_AGENT = "AgentCheck-Scanner/1.0 (Readiness Check)"
 TIMEOUT = 15.0
 
 PRODUCT_URL_PATTERNS = [

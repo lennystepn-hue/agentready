@@ -63,7 +63,7 @@ const categories = [
 const faqs = [
   {
     q: 'Is this free?',
-    a: 'Yes. AgentReady is a free, open-source tool. You can run scans without registration.',
+    a: 'Yes. AgentCheck is a free, open-source tool. You can run scans without registration.',
   },
   {
     q: 'How long does a scan take?',
@@ -100,7 +100,7 @@ function toggleFaq(idx) {
             <path d="M20 8a10 10 0 00-4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
             <path d="M22 6a14 14 0 00-6-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
           </svg>
-          <span class="font-display font-bold text-[15px] tracking-tight">AgentReady</span>
+          <span class="font-display font-bold text-[15px] tracking-tight">AgentCheck</span>
         </div>
         <div class="flex items-center gap-6">
           <a href="#how-it-works" class="hidden sm:block text-[13px] text-secondary hover:text-primary transition-colors">How it works</a>
@@ -508,7 +508,7 @@ function toggleFaq(idx) {
             <path d="M20 8a10 10 0 00-4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
             <path d="M22 6a14 14 0 00-6-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
           </svg>
-          AgentReady
+          AgentCheck
         </div>
         <div class="flex items-center gap-5 text-xs text-muted">
           <a
@@ -519,7 +519,7 @@ function toggleFaq(idx) {
           >
             GitHub
           </a>
-          <span>&copy; {{ new Date().getFullYear() }} AgentReady</span>
+          <span>&copy; {{ new Date().getFullYear() }} AgentCheck</span>
         </div>
       </div>
     </footer>

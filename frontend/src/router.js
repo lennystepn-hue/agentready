@@ -72,7 +72,7 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   if (to.meta.requiresAuth) {
-    const token = localStorage.getItem('agentready_token')
+    const token = localStorage.getItem('agentcheck_token')
     if (!token) {
       next({ name: 'Login', query: { redirect: to.fullPath } })
       return

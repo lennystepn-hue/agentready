@@ -72,7 +72,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="AgentReady - Agent Readiness Scanner",
+    title="AgentCheck - Agent Readiness Scanner",
     description="Scan e-commerce shops for AI agent readiness",
     version="1.0.0",
     lifespan=lifespan,
@@ -183,7 +183,7 @@ class CompareRequest(BaseModel):
 
 @app.get("/api/health")
 async def health_check():
-    return {"status": "healthy", "service": "AgentReady Scanner"}
+    return {"status": "healthy", "service": "AgentCheck Scanner"}
 
 
 # ---------------------------------------------------------------------------
@@ -415,7 +415,7 @@ async def download_fix_files(
 
     zip_buffer.seek(0)
     domain = result["domain"]
-    filename = f"agentready-fixes-{domain}.zip"
+    filename = f"agentcheck-fixes-{domain}.zip"
 
     return StreamingResponse(
         zip_buffer,

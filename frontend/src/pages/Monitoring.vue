@@ -81,7 +81,7 @@ onMounted(fetchMonitors)
             <path d="M20 8a10 10 0 00-4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
             <path d="M22 6a14 14 0 00-6-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
           </svg>
-          <span class="font-display font-bold text-[15px] tracking-tight">AgentReady</span>
+          <span class="font-display font-bold text-[15px] tracking-tight">AgentCheck</span>
         </router-link>
         <div class="flex items-center gap-4">
           <router-link to="/dashboard" class="text-[13px] text-secondary hover:text-primary transition-colors">Dashboard</router-link>
@@ -198,7 +198,7 @@ onMounted(fetchMonitors)
     <!-- Footer -->
     <footer class="border-t border-border-light py-6 px-6 lg:px-8 mt-auto">
       <div class="max-w-5xl mx-auto flex items-center justify-between">
-        <span class="text-xs text-muted">&copy; {{ new Date().getFullYear() }} AgentReady</span>
+        <span class="text-xs text-muted">&copy; {{ new Date().getFullYear() }} AgentCheck</span>
         <a
           href="https://github.com/lennystepn-hue/agentready"
           target="_blank"

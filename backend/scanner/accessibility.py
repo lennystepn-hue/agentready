@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 
 from scanner.models import CheckResult, CheckStatus
 
-USER_AGENT = "AgentReady-Scanner/1.0 (Readiness Check)"
+USER_AGENT = "AgentCheck-Scanner/1.0 (Readiness Check)"
 TIMEOUT = 15.0
 
 

@@ -13,7 +13,7 @@ from scanner.trust import run_trust_checks
 from scanner.discovery import find_product_pages
 from db import update_scan_result
 
-USER_AGENT = "AgentReady-Scanner/1.0 (Readiness Check)"
+USER_AGENT = "AgentCheck-Scanner/1.0 (Readiness Check)"
 TIMEOUT = 20.0
 
 logger = logging.getLogger(__name__)

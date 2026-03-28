@@ -5,7 +5,7 @@ from scanner.models import CheckResult, CheckStatus
 from snippets.ucp import UCP_BASIC_SNIPPET
 from snippets.ai_txt import AI_TXT_SNIPPET, LLMS_TXT_SNIPPET
 
-USER_AGENT = "AgentReady-Scanner/1.0 (Readiness Check)"
+USER_AGENT = "AgentCheck-Scanner/1.0 (Readiness Check)"
 TIMEOUT = 15.0
 
 AI_BOTS = [

@@ -62,7 +62,7 @@ async function handleDownloadFixes() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `agentready-fixes-${scan.value?.domain || scanId}.zip`
+    a.download = `agentcheck-fixes-${scan.value?.domain || scanId}.zip`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -165,7 +165,7 @@ onMounted(fetchReport)
             <path d="M20 8a10 10 0 00-4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
             <path d="M22 6a14 14 0 00-6-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
           </svg>
-          <span class="font-display font-bold text-[15px] tracking-tight">AgentReady</span>
+          <span class="font-display font-bold text-[15px] tracking-tight">AgentCheck</span>
         </router-link>
         <div class="flex items-center gap-1">
           <router-link to="/pricing" class="btn-ghost">Pricing</router-link>
@@ -365,7 +365,7 @@ onMounted(fetchReport)
       <!-- Footer -->
       <footer class="border-t border-border-light py-6 px-6 lg:px-8">
         <div class="max-w-4xl mx-auto flex items-center justify-between">
-          <span class="text-xs text-muted">&copy; {{ new Date().getFullYear() }} AgentReady</span>
+          <span class="text-xs text-muted">&copy; {{ new Date().getFullYear() }} AgentCheck</span>
           <a
             href="https://github.com"
             target="_blank"

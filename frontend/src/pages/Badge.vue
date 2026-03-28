@@ -23,12 +23,12 @@ const reportUrl = computed(() => {
 
 const embedCode = computed(() => {
   if (!scan.value) return ''
-  return `<a href="${reportUrl.value}" target="_blank" rel="noopener">\n  <img src="${badgeUrl.value}" alt="AgentReady Score: ${scan.value.score}" width="200" />\n</a>`
+  return `<a href="${reportUrl.value}" target="_blank" rel="noopener">\n  <img src="${badgeUrl.value}" alt="AgentCheck Score: ${scan.value.score}" width="200" />\n</a>`
 })
 
 const markdownCode = computed(() => {
   if (!scan.value) return ''
-  return `[![AgentReady Score: ${scan.value.score}](${badgeUrl.value})](${reportUrl.value})`
+  return `[![AgentCheck Score: ${scan.value.score}](${badgeUrl.value})](${reportUrl.value})`
 })
 
 async function fetchData() {
@@ -55,7 +55,7 @@ onMounted(fetchData)
             <path d="M20 8a10 10 0 00-4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
             <path d="M22 6a14 14 0 00-6-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
           </svg>
-          <span class="font-display font-bold text-[15px] tracking-tight">AgentReady</span>
+          <span class="font-display font-bold text-[15px] tracking-tight">AgentCheck</span>
         </router-link>
         <router-link
           :to="{ name: 'Report', params: { id: scanId } }"
@@ -88,7 +88,7 @@ onMounted(fetchData)
 
         <!-- Title -->
         <div class="mb-10 animate-fade-in">
-          <h1 class="font-display text-2xl font-bold tracking-tight mb-2">Your AgentReady badge</h1>
+          <h1 class="font-display text-2xl font-bold tracking-tight mb-2">Your AgentCheck badge</h1>
           <p class="text-secondary text-sm leading-relaxed prose-body">
             Show visitors and partners that your shop has been evaluated for AI agent
             compatibility. Embed the badge on your website, in your README, or in documentation.
@@ -102,7 +102,7 @@ onMounted(fetchData)
             <div class="inline-flex items-center gap-4 border border-warm-200 rounded-md px-5 py-3 bg-surface">
               <ScoreCircle :score="scan.score" :grade="scan.grade" :size="52" />
               <div>
-                <p class="text-sm font-display font-bold text-primary leading-none">AgentReady</p>
+                <p class="text-sm font-display font-bold text-primary leading-none">AgentCheck</p>
                 <p class="text-xs text-muted mt-0.5">{{ scan.domain }}</p>
               </div>
             </div>

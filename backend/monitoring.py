@@ -14,7 +14,7 @@ SMTP_HOST = os.environ.get("SMTP_HOST", "")
 SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
 SMTP_USER = os.environ.get("SMTP_USER", "")
 SMTP_PASS = os.environ.get("SMTP_PASS", "")
-SMTP_FROM = os.environ.get("SMTP_FROM", "noreply@agentready.org")
+SMTP_FROM = os.environ.get("SMTP_FROM", "noreply@agentcheck.org")
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
 
 
@@ -103,12 +103,12 @@ async def send_score_email(
     diff = abs(new_score - old_score)
     scan_url = f"{FRONTEND_URL}/scan/{scan_id}"
 
-    subject = f"AgentReady: {domain} score {direction} by {diff} points"
+    subject = f"AgentCheck: {domain} score {direction} by {diff} points"
 
     html_body = f"""
     <html>
     <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>AgentReady Score Update</h2>
+        <h2>AgentCheck Score Update</h2>
         <p>Your monitored domain <strong>{domain}</strong> has {direction}.</p>
         <table style="border-collapse: collapse; margin: 20px 0;">
             <tr>
@@ -121,7 +121,7 @@ async def send_score_email(
             </tr>
         </table>
         <p><a href="{scan_url}" style="background: #4f46e5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px;">View Full Report</a></p>
-        <p style="color: #666; font-size: 12px; margin-top: 30px;">You are receiving this because you have monitoring enabled for {domain} on AgentReady.</p>
+        <p style="color: #666; font-size: 12px; margin-top: 30px;">You are receiving this because you have monitoring enabled for {domain} on AgentCheck.</p>
     </body>
     </html>
     """

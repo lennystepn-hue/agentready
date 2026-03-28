@@ -3,7 +3,7 @@ const BASE_URL = import.meta.env.DEV
   : window.location.origin
 
 function getAuthHeaders() {
-  const token = localStorage.getItem('agentready_token')
+  const token = localStorage.getItem('agentcheck_token')
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 

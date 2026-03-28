@@ -176,6 +176,15 @@ function isActive(to) {
           </button>
         </div>
 
+        <!-- Legal links -->
+        <div class="px-3 py-3 border-t border-border-light">
+          <div class="flex flex-wrap gap-x-3 gap-y-1 px-3">
+            <router-link to="/privacy" class="text-[11px] text-muted hover:text-secondary transition-colors">Privacy</router-link>
+            <router-link to="/terms" class="text-[11px] text-muted hover:text-secondary transition-colors">Terms</router-link>
+            <router-link to="/imprint" class="text-[11px] text-muted hover:text-secondary transition-colors">Imprint</router-link>
+          </div>
+        </div>
+
         <!-- User info at bottom -->
         <div class="px-3 py-3 border-t border-border-light">
           <div class="flex items-center gap-2.5 px-3">

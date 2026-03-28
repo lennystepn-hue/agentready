@@ -60,6 +60,21 @@ const routes = [
     name: 'CheckoutSuccess',
     component: () => import('./pages/CheckoutSuccess.vue'),
   },
+  {
+    path: '/privacy',
+    name: 'Privacy',
+    component: () => import('./pages/Privacy.vue'),
+  },
+  {
+    path: '/terms',
+    name: 'Terms',
+    component: () => import('./pages/Terms.vue'),
+  },
+  {
+    path: '/imprint',
+    name: 'Imprint',
+    component: () => import('./pages/Imprint.vue'),
+  },
 ]
 
 const router = createRouter({

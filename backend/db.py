@@ -3,7 +3,7 @@ import json
 import os
 from datetime import datetime, timezone
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "agentcheck.db")
+DB_PATH = os.environ.get("DATABASE_PATH", os.path.join(os.path.dirname(__file__), "agentcheck.db"))
 
 
 async def get_db() -> aiosqlite.Connection:

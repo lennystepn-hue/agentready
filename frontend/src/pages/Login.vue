@@ -142,14 +142,19 @@ if (isLoggedIn.value) {
     <footer class="border-t border-border-light py-6 px-6 lg:px-8">
       <div class="max-w-5xl mx-auto flex items-center justify-between">
         <span class="text-xs text-muted">&copy; {{ new Date().getFullYear() }} AgentCheck</span>
-        <a
-          href="https://github.com/lennystepn-hue/agentready"
-          target="_blank"
-          rel="noopener"
-          class="text-xs text-secondary hover:text-primary transition-colors"
-        >
-          GitHub
-        </a>
+        <div class="flex items-center gap-5 text-xs text-muted">
+          <router-link to="/privacy" class="hover:text-secondary transition-colors">Privacy Policy</router-link>
+          <router-link to="/terms" class="hover:text-secondary transition-colors">Terms of Service</router-link>
+          <router-link to="/imprint" class="hover:text-secondary transition-colors">Imprint</router-link>
+          <a
+            href="https://github.com/lennystepn-hue/agentready"
+            target="_blank"
+            rel="noopener"
+            class="hover:text-secondary transition-colors"
+          >
+            GitHub
+          </a>
+        </div>
       </div>
     </footer>
   </div>

@@ -5,7 +5,7 @@ services:
     build: ./backend
     restart: unless-stopped
     environment:
-      - DATABASE_PATH=/data/agentready.db
+      - DATABASE_PATH=/data/agentcheck.db
     env_file:
       - ./backend/.env
     volumes:

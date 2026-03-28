@@ -2,7 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { isLoggedIn, isPro, user, logout } from '../auth.js'
-import { getUserScans, getMonitors, createCheckoutSession, createBillingPortal } from '../api.js'
+import { getUserScans, getMonitors, createCheckoutSession, createBillingPortal, startScan } from '../api.js'
 import ScoreCircle from '../components/ScoreCircle.vue'
 import AppLayout from '../components/AppLayout.vue'
 
@@ -15,6 +15,21 @@ const loadingMonitors = ref(false)
 const error = ref('')
 const upgrading = ref(false)
 const managingBilling = ref(false)
+const scanDomain = ref('')
+const scanning = ref(false)
+
+async function handleScan() {
+  if (!scanDomain.value.trim()) return
+  scanning.value = true
+  try {
+    const result = await startScan(scanDomain.value.trim())
+    router.push({ name: 'ScanProgress', params: { id: result.scan_id } })
+  } catch (e) {
+    error.value = e.message || 'Could not start scan.'
+  } finally {
+    scanning.value = false
+  }
+}
 
 function gradeFor(score) {
   if (score == null) return '—'
@@ -149,7 +164,12 @@ onMounted(async () => {
                   {{ managingBilling ? 'Loading...' : 'Manage subscription' }}
                 </button>
               </template>
-              <router-link to="/" class="btn-primary text-sm">Run new scan</router-link>
+              <form @submit.prevent="handleScan" class="flex gap-2">
+                <input v-model="scanDomain" type="text" placeholder="Enter domain..." class="input-field text-sm" />
+                <button type="submit" class="btn-primary text-sm" :disabled="scanning || !scanDomain.trim()">
+                  {{ scanning ? 'Scanning...' : 'Run scan' }}
+                </button>
+              </form>
               <router-link v-if="isPro" to="/compare" class="btn-secondary text-sm">Compare</router-link>
             </div>
           </div>

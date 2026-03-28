@@ -23,6 +23,31 @@
   </head>
   <body class="bg-page text-primary antialiased">
     <div id="app"></div>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "AgentCheck",
+      "url": "https://agentcheck.site",
+      "description": "Free AI agent readiness scanner for e-commerce shops",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "offers": [
+        {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD",
+          "description": "Free scan"
+        },
+        {
+          "@type": "Offer",
+          "price": "29",
+          "priceCurrency": "USD",
+          "description": "Pro monthly subscription"
+        }
+      ]
+    }
+    </script>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

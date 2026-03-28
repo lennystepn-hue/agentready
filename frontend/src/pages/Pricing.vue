@@ -498,6 +498,9 @@ async function handlePro() {
           AgentCheck
         </router-link>
         <div class="flex items-center gap-5 text-xs text-muted">
+          <router-link to="/privacy" class="hover:text-secondary transition-colors">Privacy Policy</router-link>
+          <router-link to="/terms" class="hover:text-secondary transition-colors">Terms of Service</router-link>
+          <router-link to="/imprint" class="hover:text-secondary transition-colors">Imprint</router-link>
           <a
             href="https://github.com/lennystepn-hue/agentready"
             target="_blank"

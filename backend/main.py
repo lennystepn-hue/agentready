@@ -192,13 +192,14 @@ async def health_check():
 
 @app.post("/api/auth/register")
 async def register(body: RegisterRequest):
-    existing = await get_user_by_email(body.email)
+    email = body.email.strip().lower()
+    existing = await get_user_by_email(email)
     if existing:
         raise HTTPException(status_code=409, detail="Email already registered.")
 
     user_id = str(uuid.uuid4())
     hashed = hash_password(body.password)
-    await create_user(user_id, body.email, hashed)
+    await create_user(user_id, email, hashed)
 
     token = create_token(user_id)
     return {

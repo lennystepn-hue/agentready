@@ -21,6 +21,45 @@ const routes = [
     name: 'Badge',
     component: () => import('./pages/Badge.vue'),
   },
+  {
+    path: '/pricing',
+    name: 'Pricing',
+    component: () => import('./pages/Pricing.vue'),
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    component: () => import('./pages/Login.vue'),
+  },
+  {
+    path: '/dashboard',
+    name: 'Dashboard',
+    component: () => import('./pages/Dashboard.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/compare',
+    name: 'Compare',
+    component: () => import('./pages/Compare.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/monitoring',
+    name: 'Monitoring',
+    component: () => import('./pages/Monitoring.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/history/:domain?',
+    name: 'History',
+    component: () => import('./pages/History.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/checkout/success',
+    name: 'CheckoutSuccess',
+    component: () => import('./pages/CheckoutSuccess.vue'),
+  },
 ]
 
 const router = createRouter({
@@ -29,6 +68,17 @@ const router = createRouter({
   scrollBehavior() {
     return { top: 0 }
   },
+})
+
+router.beforeEach((to, from, next) => {
+  if (to.meta.requiresAuth) {
+    const token = localStorage.getItem('agentready_token')
+    if (!token) {
+      next({ name: 'Login', query: { redirect: to.fullPath } })
+      return
+    }
+  }
+  next()
 })
 
 export default router

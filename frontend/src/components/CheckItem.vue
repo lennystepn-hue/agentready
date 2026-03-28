@@ -1,56 +1,51 @@
 <script setup>
 defineProps({
   name: { type: String, required: true },
-  status: { type: String, default: 'waiting' }, // 'passed', 'failed', 'warning', 'running', 'waiting'
+  status: { type: String, default: 'waiting' },
   message: { type: String, default: '' },
 })
-
-const statusConfig = {
-  passed: { icon: 'check', color: 'text-green-500', bg: 'bg-green-500/10' },
-  failed: { icon: 'x', color: 'text-red-500', bg: 'bg-red-500/10' },
-  warning: { icon: 'alert', color: 'text-yellow-500', bg: 'bg-yellow-500/10' },
-  running: { icon: 'spinner', color: 'text-blue-500', bg: 'bg-blue-500/10' },
-  waiting: { icon: 'clock', color: 'text-slate-500', bg: 'bg-slate-500/10' },
-}
 </script>
 
 <template>
-  <div class="flex items-start gap-3 py-2">
-    <!-- Status icon -->
-    <div
-      class="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mt-0.5"
-      :class="statusConfig[status]?.bg"
-    >
-      <!-- Check -->
-      <svg v-if="status === 'passed'" class="w-3.5 h-3.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+  <div class="flex items-start gap-3 py-2.5 border-b border-border-light last:border-b-0">
+    <!-- Status indicator -->
+    <div class="flex-shrink-0 mt-0.5">
+      <!-- Pass -->
+      <svg v-if="status === 'pass' || status === 'passed'" class="w-[18px] h-[18px]" viewBox="0 0 18 18" fill="none">
+        <circle cx="9" cy="9" r="9" fill="#3D8B5E" />
+        <path d="M6 9.5l2 2 4-4" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
-      <!-- X -->
-      <svg v-else-if="status === 'failed'" class="w-3.5 h-3.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+      <!-- Fail -->
+      <svg v-else-if="status === 'fail' || status === 'failed'" class="w-[18px] h-[18px]" viewBox="0 0 18 18" fill="none">
+        <circle cx="9" cy="9" r="9" fill="#C25544" />
+        <path d="M6.5 6.5l5 5M11.5 6.5l-5 5" stroke="#fff" stroke-width="1.5" stroke-linecap="round" />
       </svg>
-      <!-- Warning -->
-      <svg v-else-if="status === 'warning'" class="w-3.5 h-3.5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M12 3l9.5 16.5H2.5L12 3z" />
+      <!-- Warn -->
+      <svg v-else-if="status === 'warn' || status === 'warning'" class="w-[18px] h-[18px]" viewBox="0 0 18 18" fill="none">
+        <circle cx="9" cy="9" r="9" fill="#C08832" />
+        <path d="M9 6v3.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round" />
+        <circle cx="9" cy="12" r="0.75" fill="#fff" />
       </svg>
-      <!-- Spinner -->
-      <svg v-else-if="status === 'running'" class="w-3.5 h-3.5 text-blue-500 animate-spin" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+      <!-- Running -->
+      <svg v-else-if="status === 'running'" class="w-[18px] h-[18px] animate-spin text-accent" fill="none" viewBox="0 0 18 18">
+        <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.5" opacity="0.2" />
+        <path d="M9 2a7 7 0 014.95 2.05" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
       </svg>
-      <!-- Clock / Waiting -->
-      <svg v-else class="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="10" />
-        <path stroke-linecap="round" d="M12 6v6l4 2" />
+      <!-- Waiting -->
+      <svg v-else class="w-[18px] h-[18px] text-warm-300" viewBox="0 0 18 18" fill="none">
+        <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1" stroke-dasharray="3 3" />
       </svg>
     </div>
 
     <!-- Content -->
-    <div class="min-w-0">
-      <span class="text-sm font-medium" :class="status === 'waiting' ? 'text-slate-500' : 'text-slate-200'">
+    <div class="min-w-0 flex-1">
+      <span
+        class="text-sm"
+        :class="status === 'waiting' ? 'text-muted' : 'text-primary'"
+      >
         {{ name }}
       </span>
-      <p v-if="message" class="text-xs text-slate-500 mt-0.5 truncate">
+      <p v-if="message && status !== 'waiting'" class="text-xs text-secondary mt-0.5 leading-relaxed">
         {{ message }}
       </p>
     </div>

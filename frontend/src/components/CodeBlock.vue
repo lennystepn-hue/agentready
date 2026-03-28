@@ -17,25 +17,23 @@ function copyCode(code) {
 </script>
 
 <template>
-  <div class="relative group rounded-lg overflow-hidden border border-slate-800 bg-slate-950">
-    <!-- Language label -->
-    <div class="flex items-center justify-between px-4 py-2 bg-slate-900/50 border-b border-slate-800">
-      <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">{{ language }}</span>
+  <div class="rounded-md overflow-hidden border border-border bg-warm-50">
+    <div class="flex items-center justify-between px-4 py-2 border-b border-border-light">
+      <span class="text-xs font-display font-medium text-muted uppercase tracking-wider">{{ language }}</span>
       <button
         @click="copyCode(code)"
-        class="text-xs text-slate-500 hover:text-slate-300 transition-colors flex items-center gap-1"
+        class="text-xs text-secondary hover:text-primary transition-colors flex items-center gap-1.5 focus-visible:outline-none focus-visible:underline"
       >
         <svg v-if="!copied" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
           <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
         </svg>
-        <svg v-else class="w-3.5 h-3.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <svg v-else class="w-3.5 h-3.5 text-score-good" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
         </svg>
-        {{ copied ? 'Kopiert!' : 'Kopieren' }}
+        {{ copied ? 'Copied!' : 'Copy code' }}
       </button>
     </div>
-    <!-- Code content -->
-    <pre class="p-4 overflow-x-auto text-sm leading-relaxed"><code class="text-slate-300">{{ code }}</code></pre>
+    <pre class="p-4 overflow-x-auto text-sm leading-relaxed font-mono"><code class="text-warm-700">{{ code }}</code></pre>
   </div>
 </template>

@@ -4,27 +4,28 @@ import { computed, ref, onMounted } from 'vue'
 const props = defineProps({
   score: { type: Number, default: 0 },
   grade: { type: String, default: '' },
-  size: { type: Number, default: 200 },
+  size: { type: Number, default: 120 },
 })
 
 const animated = ref(false)
 
-const radius = computed(() => (props.size - 16) / 2)
+const strokeWidth = computed(() => Math.max(4, props.size * 0.04))
+const radius = computed(() => (props.size - strokeWidth.value * 2) / 2)
 const circumference = computed(() => 2 * Math.PI * radius.value)
 const dashOffset = computed(() =>
   circumference.value - (props.score / 100) * circumference.value
 )
 
 const scoreColor = computed(() => {
-  if (props.score >= 70) return '#22c55e'
-  if (props.score >= 40) return '#eab308'
-  return '#ef4444'
+  if (props.score >= 70) return '#3D8B5E'
+  if (props.score >= 40) return '#C08832'
+  return '#C25544'
 })
 
-const scoreColorClass = computed(() => {
-  if (props.score >= 70) return 'text-green-500'
-  if (props.score >= 40) return 'text-yellow-500'
-  return 'text-red-500'
+const trackColor = computed(() => {
+  if (props.score >= 70) return '#3D8B5E18'
+  if (props.score >= 40) return '#C0883218'
+  return '#C2554418'
 })
 
 const gradeLabel = computed(() => {
@@ -45,47 +46,46 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="relative inline-flex items-center justify-center" :style="{ width: size + 'px', height: size + 'px' }">
-    <svg
-      :width="size"
-      :height="size"
-      class="-rotate-90"
-    >
-      <!-- Background ring -->
+  <div
+    class="relative inline-flex items-center justify-center"
+    :style="{ width: size + 'px', height: size + 'px' }"
+    role="img"
+    :aria-label="`Score: ${score} out of 100, grade ${gradeLabel}`"
+  >
+    <svg :width="size" :height="size" class="-rotate-90">
+      <!-- Track -->
       <circle
         :cx="size / 2"
         :cy="size / 2"
         :r="radius"
         fill="none"
-        stroke="#1e293b"
-        stroke-width="8"
+        :stroke="trackColor"
+        :stroke-width="strokeWidth"
       />
-      <!-- Score ring -->
+      <!-- Value arc -->
       <circle
         :cx="size / 2"
         :cy="size / 2"
         :r="radius"
         fill="none"
         :stroke="scoreColor"
-        stroke-width="8"
+        :stroke-width="strokeWidth"
         stroke-linecap="round"
         :stroke-dasharray="circumference"
         :stroke-dashoffset="animated ? dashOffset : circumference"
-        class="transition-all duration-[1500ms] ease-out"
+        class="transition-all duration-[1200ms] ease-out"
       />
     </svg>
-    <!-- Center text -->
     <div class="absolute inset-0 flex flex-col items-center justify-center">
       <span
-        class="font-bold tabular-nums"
-        :class="scoreColorClass"
-        :style="{ fontSize: (size * 0.22) + 'px' }"
+        class="font-display font-bold tabular-nums leading-none"
+        :style="{ fontSize: (size * 0.28) + 'px', color: scoreColor }"
       >
         {{ score }}
       </span>
       <span
-        class="font-semibold text-slate-400 uppercase tracking-wider"
-        :style="{ fontSize: (size * 0.09) + 'px' }"
+        class="font-display font-medium text-muted mt-0.5"
+        :style="{ fontSize: Math.max(10, size * 0.11) + 'px' }"
       >
         {{ gradeLabel }}
       </span>

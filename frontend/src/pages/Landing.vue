@@ -133,8 +133,33 @@ function toggleFaq(idx) {
     </nav>
 
     <!-- ─── Hero ─── -->
-    <section class="pt-20 sm:pt-28 pb-24 px-6 lg:px-8">
-      <div class="max-w-5xl mx-auto">
+    <section class="pt-20 sm:pt-28 pb-24 px-6 lg:px-8 relative overflow-hidden">
+      <!-- Faded platform logos in background -->
+      <div class="absolute inset-0 pointer-events-none select-none" aria-hidden="true">
+        <!-- Shopify bag -->
+        <svg class="absolute -right-8 top-16 w-48 h-48 text-warm-200/40 rotate-12" viewBox="0 0 256 292" fill="currentColor">
+          <path d="M223.774 57.34c-.201-1.46-1.48-2.268-2.537-2.357-1.055-.088-23.383-1.743-23.383-1.743s-15.507-15.395-17.209-17.099c-1.703-1.703-5.029-1.185-6.32-.828-.19.053-3.326 1.027-8.611 2.655C157.154 14.906 141.368 0 122.104 0 121.645 0 121.172.014 120.7.04 114.16-5.7 106.15-2.2 98.689 6.886 88.248 20.448 80.189 38.48 77.737 52.06c-14.098 4.37-23.922 7.415-25.156 7.8-7.746 2.426-7.985 2.667-8.995 9.996C42.604 76.964 0 252.637 0 252.637L168.87 283.7l87.13-18.997s-32.022-205.953-32.226-207.363zM156.87 40.848l-13.789 4.273c.002-.37.007-.738.007-1.121 0-10.303-1.429-18.654-3.762-25.162 9.31 1.757 15.56 11.63 17.544 22.01zM131.998 20.838c2.659 6.384 4.37 15.494 4.37 27.873 0 .548-.005 1.063-.013 1.578l-28.471 8.817c5.478-21.105 15.741-31.706 24.114-38.268zM120.118 3.476c1.563-.003 3.065.3 4.504.898-11.424 8.376-23.632 21.488-29.565 52.162l-22.47 6.96c6.24-26.936 22.91-59.96 47.53-60.02z"/>
+          <path d="M221.237 54.983c-1.055-.088-23.383-1.743-23.383-1.743s-15.507-15.395-17.209-17.099c-.637-.636-1.496-.953-2.394-1.1L168.87 283.7l87.13-18.997S223.978 56.44 223.774 57.34c-.201-.894-1.48-2.268-2.537-2.357z" opacity=".3"/>
+        </svg>
+        <!-- WooCommerce / WordPress W -->
+        <svg class="absolute -left-6 top-[55%] w-36 h-36 text-warm-200/30 -rotate-6" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M2.2 5.1C1.5 5.7 1 6.8.8 8.3c-.2 1.2 0 2.7.5 4.2L4 6.3c-.6-.5-1.2-.8-1.8-1.2zm6.7 11.3l2-5.7-2-4.3c-.5 1.5-1.7 5.2-2 6.1l2 3.9zm4-11.8c-.5 0-.9.4-.9.9 0 2.4 1.1 6.2 1.1 6.2l2.5-7c-1-.2-1.8-.1-2.7-.1zm5.6 1l-2.7 7.9 1.6 3.2c1.5-2.1 2.6-4.9 2.6-7.5.1-1.4-.3-2.7-1.5-3.6z"/>
+        </svg>
+        <!-- Magento / M shape -->
+        <svg class="absolute right-[15%] bottom-12 w-32 h-32 text-warm-200/25 rotate-6" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2L2 7v10l3 1.7V8.7l7-4 7 4v10L22 17V7L12 2zm0 4L7 9v8.3l2 1.2V10l3-1.7L15 10v8.5l2-1.2V9l-5-3z"/>
+        </svg>
+        <!-- BigCommerce / hexagon -->
+        <svg class="absolute left-[30%] -top-4 w-28 h-28 text-warm-200/20 rotate-12" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2l-9 5v10l9 5 9-5V7l-9-5zm-1 15.5L5 14V9.5l6 3.3v5.7zm1-7.1L6 7.1 12 4l6 3.1-6 3.3zm7 3.6l-6 3.5v-5.7l6-3.3V14z"/>
+        </svg>
+        <!-- Prestashop / swoosh -->
+        <svg class="absolute right-[40%] top-[70%] w-24 h-24 text-warm-200/20 -rotate-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M4 16c2-4 6-8 12-8M8 20c2-4 5-7 10-7" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <div class="max-w-5xl mx-auto relative">
         <div class="grid lg:grid-cols-[1fr,340px] gap-16 items-start">
           <!-- Left: headline + form -->
           <div class="animate-fade-in">

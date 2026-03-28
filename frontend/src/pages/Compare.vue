@@ -1,8 +1,8 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { isLoggedIn, isPro, user, logout } from '../auth.js'
-import { compareDomains } from '../api.js'
+import { compareDomains, getUserScans } from '../api.js'
 import ScoreCircle from '../components/ScoreCircle.vue'
 import CategoryBar from '../components/CategoryBar.vue'
 import AppLayout from '../components/AppLayout.vue'
@@ -14,6 +14,79 @@ const competitors = ref(['', '', ''])
 const results = ref(null)
 const loading = ref(false)
 const error = ref('')
+const allScans = ref([])
+const focusedField = ref(null) // 'your' | 0 | 1 | 2
+
+function gradeFor(score) {
+  if (score >= 90) return 'A+'
+  if (score >= 80) return 'A'
+  if (score >= 70) return 'B'
+  if (score >= 60) return 'C'
+  if (score >= 40) return 'D'
+  return 'F'
+}
+
+function normalizeScan(s) {
+  return {
+    scan_id: s.scan_id || s.id,
+    domain: s.domain || '',
+    score: s.score ?? s.total_score ?? null,
+    grade: s.grade || gradeFor(s.score ?? s.total_score ?? null),
+    status: s.status || 'unknown',
+    created_at: s.created_at || s.completed_at || '',
+  }
+}
+
+// Unique scanned domains (most recent first)
+const scannedDomains = computed(() => {
+  const seen = new Set()
+  const result = []
+  for (const s of allScans.value) {
+    if (s.domain && !seen.has(s.domain)) {
+      seen.add(s.domain)
+      result.push(s)
+    }
+  }
+  return result
+})
+
+// Lookup scan_id by domain for linking to reports
+const scanIdByDomain = computed(() => {
+  const map = {}
+  for (const s of allScans.value) {
+    if (s.domain && s.scan_id && s.status === 'completed' && !map[s.domain]) {
+      map[s.domain] = s.scan_id
+    }
+  }
+  return map
+})
+
+function suggestionsFor(fieldId) {
+  const query = fieldId === 'your'
+    ? yourDomain.value.trim().toLowerCase()
+    : (competitors.value[fieldId] || '').trim().toLowerCase()
+
+  return scannedDomains.value
+    .filter(s => !query || s.domain.toLowerCase().includes(query))
+    .slice(0, 5)
+}
+
+function selectSuggestion(fieldId, domain) {
+  if (fieldId === 'your') {
+    yourDomain.value = domain
+  } else {
+    competitors.value[fieldId] = domain
+  }
+  focusedField.value = null
+}
+
+function handleFocus(fieldId) {
+  focusedField.value = fieldId
+}
+
+function handleBlur() {
+  setTimeout(() => { focusedField.value = null }, 200)
+}
 
 async function handleCompare() {
   const domains = [yourDomain.value.trim(), ...competitors.value.map(c => c.trim())].filter(Boolean)
@@ -38,6 +111,27 @@ function scoreColorBorder(score) {
   if (score >= 40) return 'border-score-medium'
   return 'border-score-bad'
 }
+
+function scoreColorClass(score) {
+  if (score >= 70) return 'text-score-good'
+  if (score >= 40) return 'text-score-medium'
+  return 'text-score-bad'
+}
+
+onMounted(async () => {
+  try {
+    const data = await getUserScans()
+    const raw = Array.isArray(data) ? data : (data.scans || [])
+    allScans.value = raw.map(normalizeScan).sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+
+    // Pre-fill the first domain with the most recently scanned domain
+    if (!yourDomain.value && allScans.value.length > 0) {
+      yourDomain.value = allScans.value[0].domain
+    }
+  } catch {
+    // non-critical
+  }
+})
 </script>
 
 <template>
@@ -65,7 +159,8 @@ function scoreColorBorder(score) {
         <!-- Compare form -->
         <div v-else class="animate-slide-up">
           <form @submit.prevent="handleCompare" class="space-y-4 max-w-md mb-10">
-            <div>
+            <!-- Your domain -->
+            <div class="relative">
               <label class="block text-sm font-display font-medium text-primary mb-1.5">Your domain</label>
               <input
                 v-model="yourDomain"
@@ -73,9 +168,31 @@ function scoreColorBorder(score) {
                 placeholder="your-shop.com"
                 class="input-field"
                 :disabled="loading"
+                @focus="handleFocus('your')"
+                @blur="handleBlur"
+                @input="focusedField = 'your'"
               />
+              <div
+                v-if="focusedField === 'your' && suggestionsFor('your').length > 0"
+                class="absolute z-10 left-0 right-0 top-full mt-1 border border-border rounded-lg bg-surface shadow-lg overflow-hidden"
+              >
+                <button
+                  v-for="s in suggestionsFor('your')"
+                  :key="s.domain"
+                  type="button"
+                  @mousedown.prevent="selectSuggestion('your', s.domain)"
+                  class="w-full text-left px-4 py-2.5 text-sm hover:bg-warm-100 transition-colors flex items-center justify-between gap-3"
+                >
+                  <span class="font-display text-primary truncate">{{ s.domain }}</span>
+                  <span v-if="s.score != null" class="text-xs font-display font-semibold tabular-nums shrink-0" :class="scoreColorClass(s.score)">
+                    {{ s.score }}
+                  </span>
+                </button>
+              </div>
             </div>
-            <div v-for="(_, idx) in competitors" :key="idx">
+
+            <!-- Competitor domains -->
+            <div v-for="(_, idx) in competitors" :key="idx" class="relative">
               <label class="block text-sm font-display font-medium text-primary mb-1.5">Competitor {{ idx + 1 }}</label>
               <input
                 v-model="competitors[idx]"
@@ -83,7 +200,27 @@ function scoreColorBorder(score) {
                 :placeholder="`competitor-${idx + 1}.com`"
                 class="input-field"
                 :disabled="loading"
+                @focus="handleFocus(idx)"
+                @blur="handleBlur"
+                @input="focusedField = idx"
               />
+              <div
+                v-if="focusedField === idx && suggestionsFor(idx).length > 0"
+                class="absolute z-10 left-0 right-0 top-full mt-1 border border-border rounded-lg bg-surface shadow-lg overflow-hidden"
+              >
+                <button
+                  v-for="s in suggestionsFor(idx)"
+                  :key="s.domain"
+                  type="button"
+                  @mousedown.prevent="selectSuggestion(idx, s.domain)"
+                  class="w-full text-left px-4 py-2.5 text-sm hover:bg-warm-100 transition-colors flex items-center justify-between gap-3"
+                >
+                  <span class="font-display text-primary truncate">{{ s.domain }}</span>
+                  <span v-if="s.score != null" class="text-xs font-display font-semibold tabular-nums shrink-0" :class="scoreColorClass(s.score)">
+                    {{ s.score }}
+                  </span>
+                </button>
+              </div>
             </div>
 
             <p v-if="error" class="text-sm text-score-bad">{{ error }}</p>
@@ -126,6 +263,15 @@ function scoreColorBorder(score) {
                     :score="cat.score || 0"
                     :max-score="cat.max_score || cat.max || 100"
                   />
+                </div>
+                <div class="mt-4 pt-3 border-t border-border-light">
+                  <router-link
+                    v-if="scanIdByDomain[r.domain]"
+                    :to="{ name: 'Report', params: { id: scanIdByDomain[r.domain] } }"
+                    class="text-[13px] text-accent hover:text-accent-hover transition-colors"
+                  >
+                    View full report
+                  </router-link>
                 </div>
               </div>
             </div>

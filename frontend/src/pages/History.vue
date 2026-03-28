@@ -1,16 +1,15 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { isLoggedIn, isPro, user, logout } from '../auth.js'
-import { getScoreHistory, getUserScans } from '../api.js'
+import { getUserScans } from '../api.js'
 import AppLayout from '../components/AppLayout.vue'
 
 const route = useRoute()
 const router = useRouter()
 
 const domain = ref(route.params.domain || '')
-const history = ref([])
-const domains = ref([])
+const allScans = ref([])
 const loading = ref(true)
 const error = ref('')
 
@@ -21,6 +20,17 @@ function gradeFor(score) {
   if (score >= 60) return 'C'
   if (score >= 40) return 'D'
   return 'F'
+}
+
+function normalizeScan(s) {
+  return {
+    scan_id: s.scan_id || s.id,
+    domain: s.domain || '',
+    score: s.score ?? s.total_score ?? null,
+    grade: s.grade || gradeFor(s.score ?? s.total_score ?? null),
+    status: s.status || 'unknown',
+    created_at: s.created_at || s.completed_at || '',
+  }
 }
 
 function scoreColorClass(score) {
@@ -42,46 +52,57 @@ function formatDate(dateStr) {
   })
 }
 
-async function fetchHistory() {
-  if (!domain.value) {
-    loading.value = false
-    return
+// Group scans by domain
+const scansByDomain = computed(() => {
+  const map = {}
+  for (const s of allScans.value) {
+    if (!s.domain) continue
+    if (!map[s.domain]) map[s.domain] = []
+    map[s.domain].push(s)
   }
-  loading.value = true
-  error.value = ''
-  try {
-    history.value = await getScoreHistory(domain.value)
-  } catch (e) {
-    error.value = e.message || 'Could not load history.'
-  } finally {
-    loading.value = false
+  // Sort each group by date descending
+  for (const d of Object.keys(map)) {
+    map[d].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
   }
-}
+  return map
+})
+
+// Unique domains sorted by most recent scan first
+const domains = computed(() => {
+  const entries = Object.entries(scansByDomain.value)
+  entries.sort((a, b) => {
+    const dateA = a[1][0]?.created_at || ''
+    const dateB = b[1][0]?.created_at || ''
+    return new Date(dateB) - new Date(dateA)
+  })
+  return entries.map(([d]) => d)
+})
+
+// Scans for the currently selected domain
+const history = computed(() => {
+  if (!domain.value) return []
+  return scansByDomain.value[domain.value] || []
+})
 
 function selectDomain(d) {
   domain.value = d
   router.replace({ name: 'History', params: { domain: d } })
 }
 
-watch(() => domain.value, fetchHistory)
-
 onMounted(async () => {
-  // Load user's scanned domains for the selector
   try {
-    const scans = await getUserScans()
-    const unique = [...new Set(scans.map(s => s.domain))]
-    domains.value = unique
-    if (!domain.value && unique.length > 0) {
-      domain.value = unique[0]
-      router.replace({ name: 'History', params: { domain: unique[0] } })
-    }
-  } catch {
-    // non-critical
-  }
+    const data = await getUserScans()
+    const raw = Array.isArray(data) ? data : (data.scans || [])
+    allScans.value = raw.map(normalizeScan)
 
-  if (domain.value) {
-    await fetchHistory()
-  } else {
+    // Auto-select domain if none specified
+    if (!domain.value && domains.value.length > 0) {
+      domain.value = domains.value[0]
+      router.replace({ name: 'History', params: { domain: domains.value[0] } })
+    }
+  } catch (e) {
+    error.value = e.message || 'Could not load scans.'
+  } finally {
     loading.value = false
   }
 })
@@ -111,22 +132,6 @@ onMounted(async () => {
 
         <!-- History content -->
         <div v-else class="animate-slide-up">
-          <!-- Domain selector -->
-          <div v-if="domains.length > 1" class="mb-6">
-            <p class="section-label mb-2">Select domain</p>
-            <div class="flex flex-wrap gap-2">
-              <button
-                v-for="d in domains"
-                :key="d"
-                @click="selectDomain(d)"
-                class="px-3 py-1.5 text-sm font-display rounded-md border transition-colors"
-                :class="d === domain ? 'border-accent bg-accent-light text-accent font-semibold' : 'border-border text-secondary hover:bg-warm-100'"
-              >
-                {{ d }}
-              </button>
-            </div>
-          </div>
-
           <!-- Loading -->
           <div v-if="loading" class="py-8 text-center">
             <svg class="w-5 h-5 text-accent animate-spin mx-auto mb-2" fill="none" viewBox="0 0 24 24">
@@ -140,77 +145,100 @@ onMounted(async () => {
             <p class="text-sm text-score-bad">{{ error }}</p>
           </div>
 
-          <!-- No domain selected -->
-          <div v-else-if="!domain" class="border border-border-light rounded-lg p-8 text-center">
-            <p class="text-sm text-secondary">Run a scan first to see score history.</p>
-            <router-link to="/" class="btn-primary mt-3 inline-block">Run a scan</router-link>
+          <!-- No scans at all -->
+          <div v-else-if="allScans.length === 0" class="border border-border-light rounded-lg p-8 text-center">
+            <p class="text-sm text-secondary mb-1">You haven't scanned any domains yet.</p>
+            <p class="text-sm text-muted mb-4">Run a scan to start tracking your score over time.</p>
+            <router-link to="/" class="btn-primary inline-block">Run a scan</router-link>
           </div>
 
-          <!-- Empty history -->
-          <div v-else-if="history.length === 0" class="border border-border-light rounded-lg p-8 text-center">
-            <p class="text-sm text-secondary">No history data for {{ domain }} yet.</p>
-          </div>
-
-          <!-- History chart + table -->
+          <!-- Has scans -->
           <div v-else>
-            <!-- Simple CSS bar chart -->
-            <div class="mb-8">
-              <p class="section-label mb-4">Score over time for {{ domain }}</p>
-              <div class="flex items-end gap-2 h-32">
-                <div
-                  v-for="(entry, idx) in history"
-                  :key="idx"
-                  class="flex-1 flex flex-col items-center justify-end gap-1 min-w-0"
+            <!-- Domain selector -->
+            <div class="mb-6">
+              <p class="section-label mb-2">Select domain</p>
+              <div class="flex flex-wrap gap-2">
+                <button
+                  v-for="d in domains"
+                  :key="d"
+                  @click="selectDomain(d)"
+                  class="px-3 py-1.5 text-sm font-display rounded-md border transition-colors"
+                  :class="d === domain ? 'border-accent bg-accent-light text-accent font-semibold' : 'border-border text-secondary hover:bg-warm-100'"
                 >
-                  <span class="text-[11px] font-display font-semibold tabular-nums" :class="scoreColorClass(entry.score)">
-                    {{ entry.score }}
-                  </span>
-                  <div
-                    class="w-full max-w-[40px] rounded-t transition-all duration-500"
-                    :class="barColorClass(entry.score)"
-                    :style="{ height: Math.max(4, entry.score) + '%' }"
-                  />
-                  <span class="text-[9px] text-muted truncate max-w-full">
-                    {{ formatDate(entry.date || entry.created_at).replace(/, \d{4}$/, '') }}
-                  </span>
-                </div>
+                  {{ d }}
+                </button>
               </div>
             </div>
 
-            <!-- Table -->
-            <div class="border border-border rounded-lg overflow-hidden bg-surface">
-              <table class="w-full text-left text-sm">
-                <thead>
-                  <tr class="border-b border-border-light">
-                    <th class="px-5 py-3 text-xs font-display font-semibold text-muted uppercase tracking-wider">Date</th>
-                    <th class="px-5 py-3 text-xs font-display font-semibold text-muted uppercase tracking-wider">Score</th>
-                    <th class="px-5 py-3 text-xs font-display font-semibold text-muted uppercase tracking-wider">Grade</th>
-                    <th class="px-5 py-3 text-xs font-display font-semibold text-muted uppercase tracking-wider"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="(entry, idx) in history"
-                    :key="idx"
-                    class="border-b border-border-light last:border-b-0"
+            <!-- Empty history for this domain -->
+            <div v-if="history.length === 0" class="border border-border-light rounded-lg p-8 text-center">
+              <p class="text-sm text-secondary">No history data for {{ domain }} yet.</p>
+            </div>
+
+            <!-- History chart + table -->
+            <div v-else>
+              <!-- Simple CSS bar chart -->
+              <div class="mb-8">
+                <p class="section-label mb-4">Score over time for {{ domain }}</p>
+                <div class="flex items-end gap-2 h-32">
+                  <div
+                    v-for="(entry, idx) in [...history].reverse()"
+                    :key="entry.scan_id || idx"
+                    class="flex-1 flex flex-col items-center justify-end gap-1 min-w-0"
                   >
-                    <td class="px-5 py-3 text-secondary">{{ formatDate(entry.date || entry.created_at) }}</td>
-                    <td class="px-5 py-3">
-                      <span class="font-display font-semibold tabular-nums" :class="scoreColorClass(entry.score)">{{ entry.score }}</span>
-                    </td>
-                    <td class="px-5 py-3 text-secondary font-display">{{ entry.grade || gradeFor(entry.score) }}</td>
-                    <td class="px-5 py-3 text-right">
-                      <router-link
-                        v-if="entry.scan_id"
-                        :to="{ name: 'Report', params: { id: entry.scan_id } }"
-                        class="text-[13px] text-accent hover:text-accent-hover transition-colors"
-                      >
-                        View report
-                      </router-link>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                    <span class="text-[11px] font-display font-semibold tabular-nums" :class="scoreColorClass(entry.score)">
+                      {{ entry.score }}
+                    </span>
+                    <div
+                      class="w-full max-w-[40px] rounded-t transition-all duration-500"
+                      :class="barColorClass(entry.score)"
+                      :style="{ height: Math.max(4, entry.score) + '%' }"
+                    />
+                    <span class="text-[9px] text-muted truncate max-w-full">
+                      {{ formatDate(entry.created_at).replace(/, \d{4}$/, '') }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Table -->
+              <div class="border border-border rounded-lg overflow-hidden bg-surface">
+                <table class="w-full text-left text-sm">
+                  <thead>
+                    <tr class="border-b border-border-light">
+                      <th class="px-5 py-3 text-xs font-display font-semibold text-muted uppercase tracking-wider">Date</th>
+                      <th class="px-5 py-3 text-xs font-display font-semibold text-muted uppercase tracking-wider">Score</th>
+                      <th class="px-5 py-3 text-xs font-display font-semibold text-muted uppercase tracking-wider">Grade</th>
+                      <th class="px-5 py-3 text-xs font-display font-semibold text-muted uppercase tracking-wider"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="entry in history"
+                      :key="entry.scan_id"
+                      class="border-b border-border-light last:border-b-0"
+                    >
+                      <td class="px-5 py-3 text-secondary">{{ formatDate(entry.created_at) }}</td>
+                      <td class="px-5 py-3">
+                        <span class="font-display font-semibold tabular-nums" :class="scoreColorClass(entry.score)">{{ entry.score }}</span>
+                      </td>
+                      <td class="px-5 py-3 text-secondary font-display">{{ entry.grade }}</td>
+                      <td class="px-5 py-3 text-right">
+                        <router-link
+                          v-if="entry.scan_id && entry.status === 'completed'"
+                          :to="{ name: 'Report', params: { id: entry.scan_id } }"
+                          class="text-[13px] text-accent hover:text-accent-hover transition-colors"
+                        >
+                          View report
+                        </router-link>
+                        <span v-else-if="entry.status && entry.status !== 'completed'" class="text-[13px] text-muted">
+                          {{ entry.status }}
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>

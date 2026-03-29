@@ -185,6 +185,38 @@ class CompareRequest(BaseModel):
 # Health
 # ---------------------------------------------------------------------------
 
+@app.get("/.well-known/ucp")
+async def ucp_endpoint():
+    return {
+        "version": "1.0",
+        "business": {
+            "name": "AgentCheck",
+            "type": "saas",
+            "description": "AI agent readiness scanner for any website",
+            "url": "https://agentcheck.site",
+            "languages": ["en"],
+            "support_email": "contact@agentcheck.site"
+        },
+        "capabilities": {
+            "website_scanning": True,
+            "ai_readiness_scoring": True,
+            "fix_generation": True,
+            "competitor_comparison": True,
+            "monitoring": True,
+            "api_access": True
+        },
+        "endpoints": {
+            "scan": "/api/scan",
+            "health": "/api/health",
+            "pricing": "/api/pricing"
+        },
+        "authentication": {
+            "type": "bearer_token",
+            "registration": "/api/auth/register"
+        }
+    }
+
+
 @app.get("/api/health")
 async def health_check():
     return {"status": "healthy", "service": "AgentCheck Scanner"}

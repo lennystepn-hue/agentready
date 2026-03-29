@@ -1,0 +1,35 @@
+# AgentCheck
+
+> AI agent readiness scanner for any website. Free, open source.
+
+## About
+AgentCheck scans websites and scores them on how well AI agents (ChatGPT, Claude, Gemini, Perplexity) can discover, read, and interact with them. It runs 18+ automated checks across 5 categories and provides actionable fix recommendations with code snippets.
+
+## Features
+- Free website scanning with score 0-100
+- Auto-detects site type (e-commerce, blog, SaaS, restaurant, etc.)
+- Protocol checks: llms.txt, ai.txt, robots.txt, UCP endpoint
+- Structured data analysis: Schema.org, JSON-LD
+- Agent accessibility: TTFB, JS dependency, API availability
+- Conversion readiness: CTAs, forms, booking systems
+- Trust signals: HTTPS, security headers, contact info
+- AI-powered insights: competitor detection, smart recommendations
+- Fix file generation: ai.txt, llms.txt, Schema templates, implementation guide
+
+## Pricing
+- Free: Scan + Score + Report
+- Fix Files ($9): Tailored fix files for one scan
+- Pro ($29/month): Unlimited fixes, monitoring, competitor comparison, AI discovery test
+
+## API
+POST /api/scan - Start a scan
+GET /api/scan/{id} - Get results
+GET /api/health - Health check
+
+## Links
+- Website: https://agentcheck.site
+- GitHub: https://github.com/lennystepn-hue/agentready
+- Pricing: https://agentcheck.site/pricing
+
+## Contact
+contact@agentcheck.site

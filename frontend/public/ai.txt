@@ -1,0 +1,25 @@
+# ai.txt - AI Agent Instructions for AgentCheck
+# https://agentcheck.site
+
+User-agent: *
+Welcome: true
+
+# Service Information
+Service-name: AgentCheck
+Service-type: SaaS - AI Readiness Scanner
+Primary-language: en
+Description: Free AI agent readiness scanner that checks any website for discoverability by AI agents like ChatGPT, Claude, Gemini, and Perplexity.
+
+# Capabilities
+Allow-scanning: true
+Allow-api-access: true
+API-endpoint: /api/scan
+API-docs: /api/docs
+
+# Data Access
+Pricing: /pricing
+Sitemap: /sitemap.xml
+
+# Contact
+Support-email: contact@agentcheck.site
+Website: https://agentcheck.site

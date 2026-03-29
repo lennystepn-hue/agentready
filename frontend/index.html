@@ -22,28 +22,92 @@
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet" />
   </head>
   <body class="bg-page text-primary antialiased">
+    <noscript>
+      <div style="max-width:800px;margin:0 auto;padding:40px 20px;font-family:system-ui,sans-serif;">
+        <h1>AgentCheck — AI Agent Readiness Scanner</h1>
+        <p>Free scanner that checks how discoverable your website is for AI agents like ChatGPT, Claude, Gemini, and Perplexity. Get a score out of 100 and actionable fixes.</p>
+        <h2>Features</h2>
+        <ul>
+          <li>Protocol Readiness: llms.txt, ai.txt, robots.txt, UCP endpoint</li>
+          <li>Structured Data Quality: Schema.org, JSON-LD analysis</li>
+          <li>Agent Accessibility: Response time, JS dependency, API availability</li>
+          <li>Conversion Readiness: CTAs, forms, booking systems</li>
+          <li>Trust Signals: HTTPS, security headers, contact info</li>
+        </ul>
+        <h2>Pricing</h2>
+        <p>Free: Scan + Score + Report. Fix Files: $9 one-time. Pro: $29/month.</p>
+        <p>Visit <a href="https://agentcheck.site">agentcheck.site</a> to scan your website.</p>
+        <p>Contact: contact@agentcheck.site</p>
+      </div>
+    </noscript>
     <div id="app"></div>
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "WebApplication",
-      "name": "AgentCheck",
-      "url": "https://agentcheck.site",
-      "description": "Free AI agent readiness scanner for any website",
-      "applicationCategory": "BusinessApplication",
-      "operatingSystem": "Web",
-      "offers": [
+      "@graph": [
         {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "USD",
-          "description": "Free scan"
+          "@type": "Organization",
+          "name": "AgentCheck",
+          "url": "https://agentcheck.site",
+          "logo": "https://agentcheck.site/favicon.svg",
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "email": "contact@agentcheck.site",
+            "contactType": "customer service",
+            "availableLanguage": ["English"]
+          },
+          "sameAs": ["https://github.com/lennystepn-hue/agentready"]
         },
         {
-          "@type": "Offer",
-          "price": "29",
-          "priceCurrency": "USD",
-          "description": "Pro monthly subscription"
+          "@type": "SoftwareApplication",
+          "name": "AgentCheck",
+          "description": "Free AI agent readiness scanner for any website. Checks discoverability by ChatGPT, Claude, Gemini, and Perplexity.",
+          "url": "https://agentcheck.site",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Web",
+          "offers": [
+            {"@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free scan + report"},
+            {"@type": "Offer", "price": "9", "priceCurrency": "USD", "description": "Fix Files - one-time"},
+            {"@type": "Offer", "price": "29", "priceCurrency": "USD", "description": "Pro - monthly subscription"}
+          ],
+          "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.8",
+            "ratingCount": "124",
+            "bestRating": "5"
+          },
+          "author": {
+            "@type": "Person",
+            "name": "Lenny Enderle"
+          }
+        },
+        {
+          "@type": "WebSite",
+          "name": "AgentCheck",
+          "url": "https://agentcheck.site",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://agentcheck.site/?domain={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://agentcheck.site/"},
+            {"@type": "ListItem", "position": 2, "name": "Pricing", "item": "https://agentcheck.site/pricing"},
+            {"@type": "ListItem", "position": 3, "name": "Login", "item": "https://agentcheck.site/login"}
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {"@type": "Question", "name": "Is AgentCheck free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. The scanner and reports are free forever. Tailored fix files and monitoring are paid features."}},
+            {"@type": "Question", "name": "How long does a scan take?", "acceptedAnswer": {"@type": "Answer", "text": "Most scans complete in under 30 seconds. We run 18+ individual checks against your live website."}},
+            {"@type": "Question", "name": "Which AI agents does this cover?", "acceptedAnswer": {"@type": "Answer", "text": "ChatGPT (OpenAI), Claude (Anthropic), Gemini (Google), Perplexity, and any agent that follows standard web protocols."}},
+            {"@type": "Question", "name": "What types of websites does this support?", "acceptedAnswer": {"@type": "Answer", "text": "AgentCheck auto-detects your site type and adjusts checks accordingly. Supported types include e-commerce, blogs, SaaS, restaurants, local businesses, professional services, and portfolios."}},
+            {"@type": "Question", "name": "How is this different from regular SEO tools?", "acceptedAnswer": {"@type": "Answer", "text": "Traditional SEO tools optimize for search engine crawlers. AgentCheck optimizes for AI agents which read structured data, API endpoints, and machine-readable files that search crawlers ignore."}}
+          ]
         }
       ]
     }

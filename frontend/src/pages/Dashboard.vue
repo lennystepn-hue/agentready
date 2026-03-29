@@ -11,7 +11,7 @@ import {
   getUserScans, getMonitors, startScan, deleteScan,
   getHostedFiles, activateHostedFiles,
   pingCrawlers, getPingHistory,
-  getMentions, getCompetitors, discoverCompetitors,
+  getMentions, trackMentions, getCompetitors, discoverCompetitors,
   optimizeContent, simulateAgent,
 } from '../api.js'
 
@@ -38,6 +38,7 @@ const pinging = ref(false)
 const discoveringComps = ref(false)
 const optimizing = ref(false)
 const simulating = ref(false)
+const trackingMentions = ref(false)
 
 // UI state
 const suggestionsExpanded = ref(false)
@@ -257,6 +258,20 @@ async function handleSimulate() {
   }
 }
 
+async function handleTrackMentions() {
+  if (!primaryDomain.value) return
+  trackingMentions.value = true
+  try {
+    await trackMentions(primaryDomain.value)
+    const data = await getMentions(primaryDomain.value)
+    mentions.value = Array.isArray(data) ? data : (data.history || data.mentions || [])
+  } catch (e) {
+    error.value = e.message || 'Could not track mentions.'
+  } finally {
+    trackingMentions.value = false
+  }
+}
+
 const siteOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://agentcheck.site'
 
 function hostedUrl(file) {
@@ -454,8 +469,19 @@ onMounted(async () => {
                 </div>
                 <p class="text-sm text-secondary font-body leading-relaxed">
                   <template v-if="!isPro">Upgrade to Pro to track how often AI agents mention your site in their responses.</template>
-                  <template v-else>Run a mention scan to see how often AI agents reference your domain across queries.</template>
+                  <template v-else>Track how often AI agents mention your site in their responses.</template>
                 </p>
+                <div v-if="isPro" class="mt-4">
+                  <button
+                    @click="handleTrackMentions"
+                    :disabled="trackingMentions || !primaryDomain"
+                    class="inline-flex items-center gap-1.5 text-xs font-display font-semibold text-accent hover:text-accent-hover transition-colors disabled:opacity-50"
+                  >
+                    <svg v-if="trackingMentions" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                    <svg v-else class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                    {{ trackingMentions ? 'Tracking...' : 'Track mentions now' }}
+                  </button>
+                </div>
                 <div v-if="!isPro" class="mt-4">
                   <router-link to="/pricing" class="inline-flex items-center gap-1.5 text-xs font-display font-semibold text-accent hover:text-accent-hover transition-colors">
                     Learn more

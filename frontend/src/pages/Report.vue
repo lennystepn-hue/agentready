@@ -71,6 +71,11 @@ function handleLogout() {
 
 async function checkFixAccess() {
   if (!isLoggedIn.value) return
+  // Pro users always have access
+  if (isPro.value) {
+    hasFixAccess.value = true
+    return
+  }
   checkingAccess.value = true
   try {
     const access = await getScanAccess(scanId)

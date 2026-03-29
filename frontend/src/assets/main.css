@@ -140,11 +140,23 @@
   .stagger-children > *:nth-child(8) { animation-delay: 420ms; }
 
   .bg-grid {
+    position: relative;
+  }
+  .bg-grid::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
     background-image:
       linear-gradient(to right, oklch(85% 0.005 60 / 0.35) 1px, transparent 1px),
       linear-gradient(to bottom, oklch(85% 0.005 60 / 0.35) 1px, transparent 1px);
     background-size: 48px 48px;
     -webkit-mask-image: radial-gradient(ellipse 60% 50% at 50% 40%, black 20%, transparent 70%);
     mask-image: radial-gradient(ellipse 60% 50% at 50% 40%, black 20%, transparent 70%);
+  }
+  .bg-grid > * {
+    position: relative;
+    z-index: 1;
   }
 }

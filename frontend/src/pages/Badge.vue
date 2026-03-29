@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { getScanResult } from '../api.js'
+import AppHeader from '../components/AppHeader.vue'
 import ScoreCircle from '../components/ScoreCircle.vue'
 import CodeBlock from '../components/CodeBlock.vue'
 
@@ -47,24 +48,7 @@ onMounted(fetchData)
 <template>
   <div class="flex-1 flex flex-col">
     <!-- Nav -->
-    <nav class="border-b border-border-light">
-      <div class="max-w-5xl mx-auto px-6 lg:px-8 h-14 flex items-center justify-between">
-        <router-link to="/" class="flex items-center gap-2">
-          <svg class="w-5 h-5 text-accent" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2L4 20h4l1.5-4h5L16 20h4L12 2zm0 7l2 5h-4l2-5z" fill="currentColor"/>
-            <path d="M20 8a10 10 0 00-4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
-            <path d="M22 6a14 14 0 00-6-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
-          </svg>
-          <span class="font-display font-bold text-[15px] tracking-tight">AgentCheck</span>
-        </router-link>
-        <router-link
-          :to="{ name: 'Report', params: { id: scanId } }"
-          class="btn-ghost"
-        >
-          Back to report
-        </router-link>
-      </div>
-    </nav>
+    <AppHeader :show-back="'/report/' + scanId" back-label="Report" />
 
     <!-- Loading -->
     <div v-if="loading" class="flex-1 flex items-center justify-center">

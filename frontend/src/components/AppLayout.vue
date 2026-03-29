@@ -1,16 +1,12 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { isLoggedIn, isPro, user, logout } from '../auth.js'
+import { isLoggedIn, isPro, user } from '../auth.js'
 import { createBillingPortal } from '../api.js'
+import AppHeader from './AppHeader.vue'
 
 const route = useRoute()
 const router = useRouter()
-
-function handleLogout() {
-  logout()
-  router.push('/')
-}
 
 async function handleManageSubscription() {
   try {
@@ -65,27 +61,8 @@ function isActive(to) {
 
 <template>
   <div class="flex-1 flex flex-col min-h-screen">
-    <!-- Top nav bar -->
-    <nav class="sticky top-0 z-50 bg-page/95 backdrop-blur-sm border-b border-border-light">
-      <div class="px-6 lg:px-8 h-14 flex items-center justify-between">
-        <router-link to="/" class="flex items-center gap-2">
-          <svg class="w-5 h-5 text-accent" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2L4 20h4l1.5-4h5L16 20h4L12 2zm0 7l2 5h-4l2-5z" fill="currentColor"/>
-            <path d="M20 8a10 10 0 00-4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
-            <path d="M22 6a14 14 0 00-6-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
-          </svg>
-          <span class="font-display font-bold text-[15px] tracking-tight">AgentCheck</span>
-        </router-link>
-        <div class="flex items-center gap-4">
-          <div
-            class="w-7 h-7 rounded-full bg-accent text-white flex items-center justify-center text-xs font-display font-bold"
-            :title="user?.email"
-          >
-            {{ user?.email?.[0]?.toUpperCase() || '?' }}
-          </div>
-        </div>
-      </div>
-    </nav>
+    <!-- App Header -->
+    <AppHeader />
 
     <div class="flex flex-1">
       <!-- Sidebar (hidden on mobile) -->
@@ -164,41 +141,11 @@ function isActive(to) {
           <!-- Divider -->
           <div class="border-t border-border-light my-3"></div>
 
-          <!-- Sign out -->
-          <button
-            @click="handleLogout"
-            class="w-full flex items-center gap-2.5 text-sm py-2 px-3 rounded-md text-secondary hover:bg-warm-100 hover:text-primary transition-colors text-left"
-          >
-            <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            <span>Sign out</span>
-          </button>
-        </div>
-
-        <!-- Legal links -->
-        <div class="px-3 py-3 border-t border-border-light">
+          <!-- Legal links -->
           <div class="flex flex-wrap gap-x-3 gap-y-1 px-3">
             <router-link to="/privacy" class="text-[11px] text-muted hover:text-secondary transition-colors">Privacy</router-link>
             <router-link to="/terms" class="text-[11px] text-muted hover:text-secondary transition-colors">Terms</router-link>
             <router-link to="/imprint" class="text-[11px] text-muted hover:text-secondary transition-colors">Imprint</router-link>
-          </div>
-        </div>
-
-        <!-- User info at bottom -->
-        <div class="px-3 py-3 border-t border-border-light">
-          <div class="flex items-center gap-2.5 px-3">
-            <div
-              class="w-7 h-7 rounded-full bg-accent text-white flex items-center justify-center text-xs font-display font-bold flex-shrink-0"
-            >
-              {{ user?.email?.[0]?.toUpperCase() || '?' }}
-            </div>
-            <div class="min-w-0">
-              <p class="text-xs text-primary font-display font-medium truncate">{{ user?.email }}</p>
-              <p class="text-[10px] font-display uppercase tracking-wider" :class="isPro ? 'text-accent' : 'text-muted'">
-                {{ isPro ? 'Pro plan' : 'Free plan' }}
-              </p>
-            </div>
           </div>
         </div>
       </aside>
@@ -255,16 +202,6 @@ function isActive(to) {
           </svg>
           <span class="text-[10px] font-display">Monitor</span>
         </router-link>
-
-        <button
-          @click="handleLogout"
-          class="flex flex-col items-center gap-0.5 py-1 px-2 rounded-md text-muted transition-colors"
-        >
-          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
-          <span class="text-[10px] font-display">Sign out</span>
-        </button>
       </nav>
     </div>
   </div>

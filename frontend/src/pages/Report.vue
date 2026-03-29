@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getScanResult, getScanAccess, createCheckoutSession, downloadFixFiles, runDiscoveryTest, getScanInsights } from '../api.js'
 import { isLoggedIn, isPro, user, logout } from '../auth.js'
+import AppHeader from '../components/AppHeader.vue'
 import ScoreCircle from '../components/ScoreCircle.vue'
 import CategoryBar from '../components/CategoryBar.vue'
 import FixCard from '../components/FixCard.vue'
@@ -222,52 +223,16 @@ onMounted(fetchReport)
 <template>
   <div class="flex-1 flex flex-col">
     <!-- Nav -->
-    <nav class="border-b border-border-light">
-      <div class="max-w-5xl mx-auto px-6 lg:px-8 h-14 flex items-center justify-between">
-        <router-link to="/" class="flex items-center gap-2">
-          <svg class="w-5 h-5 text-accent" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2L4 20h4l1.5-4h5L16 20h4L12 2zm0 7l2 5h-4l2-5z" fill="currentColor"/>
-            <path d="M20 8a10 10 0 00-4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
-            <path d="M22 6a14 14 0 00-6-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
+    <AppHeader :show-back="isLoggedIn ? '/dashboard' : '/'" :back-label="isLoggedIn ? 'Dashboard' : 'Home'">
+      <template #actions>
+        <button @click="shareReport" class="text-[13px] text-secondary hover:text-primary transition-colors flex items-center gap-1">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
           </svg>
-          <span class="font-display font-bold text-[15px] tracking-tight">AgentCheck</span>
-        </router-link>
-        <div class="flex items-center gap-1">
-          <router-link v-if="isLoggedIn" to="/dashboard" class="btn-ghost">
-            <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to dashboard
-          </router-link>
-          <router-link v-else to="/" class="btn-ghost">
-            <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to home
-          </router-link>
-          <router-link to="/pricing" class="btn-ghost">Pricing</router-link>
-          <button @click="shareReport" class="btn-ghost">
-            <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-            </svg>
-            {{ copied ? 'Link copied!' : 'Share report' }}
-          </button>
-          <router-link :to="{ name: 'Badge', params: { id: scanId } }" class="btn-ghost">
-            Download badge
-          </router-link>
-          <router-link v-if="isLoggedIn" to="/dashboard" class="btn-ghost">Dashboard</router-link>
-          <template v-if="isLoggedIn">
-            <div
-              class="w-7 h-7 rounded-full bg-accent text-white flex items-center justify-center text-xs font-display font-bold ml-1"
-              :title="user?.email"
-            >
-              {{ user?.email?.[0]?.toUpperCase() || '?' }}
-            </div>
-          </template>
-          <router-link v-else :to="{ name: 'Login', query: { redirect: $route.fullPath } }" class="btn-ghost">Sign in</router-link>
-        </div>
-      </div>
-    </nav>
+          {{ copied ? 'Copied!' : 'Share' }}
+        </button>
+      </template>
+    </AppHeader>
 
     <!-- Loading -->
     <div v-if="loading" class="flex-1 flex items-center justify-center">

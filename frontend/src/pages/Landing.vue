@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { startScan } from '../api.js'
-import { isLoggedIn, user } from '../auth.js'
+import AppHeader from '../components/AppHeader.vue'
 
 const router = useRouter()
 const domain = ref('')
@@ -92,45 +92,13 @@ function toggleFaq(idx) {
 <template>
   <div class="flex-1 flex flex-col">
     <!-- ─── Nav ─── -->
-    <nav class="sticky top-0 z-50 bg-page/95 backdrop-blur-sm border-b border-border-light">
-      <div class="max-w-5xl mx-auto px-6 lg:px-8 h-14 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <svg class="w-5 h-5 text-accent" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2L4 20h4l1.5-4h5L16 20h4L12 2zm0 7l2 5h-4l2-5z" fill="currentColor"/>
-            <path d="M20 8a10 10 0 00-4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
-            <path d="M22 6a14 14 0 00-6-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
-          </svg>
-          <span class="font-display font-bold text-[15px] tracking-tight">AgentCheck</span>
-        </div>
-        <div class="flex items-center gap-6">
-          <a href="#how-it-works" class="hidden sm:block text-[13px] text-secondary hover:text-primary transition-colors">How it works</a>
-          <a href="#checks" class="hidden sm:block text-[13px] text-secondary hover:text-primary transition-colors">Checks</a>
-          <a href="#faq" class="hidden sm:block text-[13px] text-secondary hover:text-primary transition-colors">FAQ</a>
-          <router-link to="/pricing" class="hidden sm:block text-[13px] text-secondary hover:text-primary transition-colors">Pricing</router-link>
-          <template v-if="isLoggedIn">
-            <router-link to="/dashboard" class="hidden sm:block text-[13px] text-secondary hover:text-primary transition-colors">Dashboard</router-link>
-            <div
-              class="w-7 h-7 rounded-full bg-accent text-white flex items-center justify-center text-xs font-display font-bold"
-              :title="user?.email"
-            >
-              {{ user?.email?.[0]?.toUpperCase() || '?' }}
-            </div>
-          </template>
-          <router-link v-else to="/login" class="hidden sm:block text-[13px] text-secondary hover:text-primary transition-colors">Sign in</router-link>
-          <a
-            href="https://github.com/lennystepn-hue/agentready"
-            target="_blank"
-            rel="noopener"
-            class="text-secondary hover:text-primary transition-colors"
-            aria-label="View source on GitHub"
-          >
-            <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
-            </svg>
-          </a>
-        </div>
-      </div>
-    </nav>
+    <AppHeader>
+      <template #actions>
+        <a href="#how-it-works" class="hidden sm:block text-[13px] text-secondary hover:text-primary transition-colors">How it works</a>
+        <a href="#checks" class="hidden sm:block text-[13px] text-secondary hover:text-primary transition-colors">Checks</a>
+        <a href="#faq" class="hidden sm:block text-[13px] text-secondary hover:text-primary transition-colors">FAQ</a>
+      </template>
+    </AppHeader>
 
     <!-- ─── Hero ─── -->
     <section class="pt-20 sm:pt-28 pb-24 px-6 lg:px-8 relative overflow-hidden">
@@ -166,16 +134,15 @@ function toggleFaq(idx) {
             <p class="text-[13px] font-display font-semibold text-accent tracking-wide uppercase mb-5">Free &amp; open source scanner</p>
 
             <h1 class="font-display text-[2.5rem] sm:text-[3.25rem] font-bold tracking-tight leading-[1.08] text-primary">
-              How discoverable is<br class="hidden sm:block" />
-              your website for<br class="hidden sm:block" />
-              AI&nbsp;Agents?
+              Make your website<br class="hidden sm:block" />
+              visible to<br class="hidden sm:block" />
+              AI&nbsp;Agents
             </h1>
 
             <p class="mt-6 text-[17px] text-secondary leading-relaxed max-w-[52ch]">
-              AI agents are the new way people discover businesses and content. If your
-              site isn't machine-readable, AI assistants will recommend your
-              competitors instead. Scan your site, fix what's broken, and start
-              getting found.
+              ChatGPT, Claude, and Gemini are becoming how people find businesses.
+              Scan your site in 30 seconds, see what AI agents can't read, and get
+              the exact fixes to start getting recommended.
             </p>
 
             <!-- Scan form -->
@@ -339,7 +306,7 @@ function toggleFaq(idx) {
             <span class="inline-block font-display font-bold text-accent text-sm mb-2">01</span>
             <h3 class="font-display font-semibold text-primary mb-2">Deploy fix files automatically</h3>
             <p class="text-sm text-secondary leading-relaxed">
-              We generate tailored ai.txt, llms.txt, Schema.org markup, and UCP configs — ready to deploy. Your dev team gets copy-paste code, or we guide them through the setup.
+              We generate the exact files AI agents need to find your site — deploy them and start appearing in AI responses within days.
             </p>
           </div>
           <div class="border-l-2 border-accent pl-5">

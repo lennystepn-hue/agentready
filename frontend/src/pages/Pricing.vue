@@ -1,18 +1,14 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { isLoggedIn, isPro, user, logout } from '../auth.js'
+import { isLoggedIn } from '../auth.js'
+import AppHeader from '../components/AppHeader.vue'
 import { createCheckoutSession } from '../api.js'
 
 const router = useRouter()
 const purchasingFix = ref(false)
 const purchasingPro = ref(false)
 const error = ref('')
-
-function handleLogout() {
-  logout()
-  router.push('/')
-}
 
 async function handleFixFiles() {
   if (!isLoggedIn.value) {
@@ -58,55 +54,17 @@ async function handlePro() {
 <template>
   <div class="flex-1 flex flex-col">
     <!-- Nav -->
-    <nav class="sticky top-0 z-50 bg-page/95 backdrop-blur-sm border-b border-border-light">
-      <div class="max-w-5xl mx-auto px-6 lg:px-8 h-14 flex items-center justify-between">
-        <router-link to="/" class="flex items-center gap-2">
-          <svg class="w-5 h-5 text-accent" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2L4 20h4l1.5-4h5L16 20h4L12 2zm0 7l2 5h-4l2-5z" fill="currentColor"/>
-            <path d="M20 8a10 10 0 00-4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
-            <path d="M22 6a14 14 0 00-6-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
-          </svg>
-          <span class="font-display font-bold text-[15px] tracking-tight">AgentCheck</span>
-        </router-link>
-        <div class="flex items-center gap-4">
-          <router-link to="/" class="text-[13px] text-secondary hover:text-primary transition-colors">Home</router-link>
-          <router-link to="/pricing" class="text-[13px] text-accent font-semibold transition-colors">Pricing</router-link>
-          <template v-if="isLoggedIn">
-            <router-link to="/dashboard" class="text-[13px] text-secondary hover:text-primary transition-colors">Dashboard</router-link>
-            <div
-              class="w-7 h-7 rounded-full bg-accent text-white flex items-center justify-center text-xs font-display font-bold"
-              :title="user?.email"
-            >
-              {{ user?.email?.[0]?.toUpperCase() || '?' }}
-            </div>
-          </template>
-          <router-link v-else to="/login" class="text-[13px] text-secondary hover:text-primary transition-colors">Sign in</router-link>
-          <a
-            href="https://github.com/lennystepn-hue/agentready"
-            target="_blank"
-            rel="noopener"
-            class="text-secondary hover:text-primary transition-colors"
-            aria-label="View source on GitHub"
-          >
-            <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
-            </svg>
-          </a>
-        </div>
-      </div>
-    </nav>
+    <AppHeader />
 
     <!-- Hero -->
     <section class="pt-16 sm:pt-20 pb-6 px-6 lg:px-8">
       <div class="max-w-5xl mx-auto">
         <p class="text-[13px] font-display font-semibold text-accent tracking-wide uppercase mb-4">Pricing</p>
         <h1 class="font-display text-[2rem] sm:text-[2.5rem] font-bold tracking-tight leading-[1.12] text-primary max-w-lg">
-          Free scanning. Paid fixes when you need them.
+          Get found by AI agents
         </h1>
         <p class="mt-4 text-[16px] text-secondary leading-relaxed max-w-[56ch]">
-          Every website gets a full scan, score, and report at no cost.
-          When you're ready to act on the results, Fix Files gives you
-          everything your dev team needs to implement changes.
+          Free scan tells you where you stand. Pro makes AI agents find and recommend your site.
         </p>
       </div>
     </section>
@@ -245,7 +203,7 @@ async function handlePro() {
                 </tr>
                 <!-- Unlimited fix generation -->
                 <tr class="border-b border-border-light">
-                  <td class="px-5 py-3 font-display text-primary">Unlimited fix generation</td>
+                  <td class="px-5 py-3 font-display text-primary">AI agents start recommending your site</td>
                   <td class="px-5 py-3">
                     <svg class="w-4 h-4 text-warm-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18 12H6" /></svg>
                   </td>
@@ -258,7 +216,7 @@ async function handlePro() {
                 </tr>
                 <!-- Weekly monitoring -->
                 <tr class="border-b border-border-light">
-                  <td class="px-5 py-3 font-display text-primary">Weekly monitoring & alerts</td>
+                  <td class="px-5 py-3 font-display text-primary">Weekly monitoring ensures you stay visible</td>
                   <td class="px-5 py-3">
                     <svg class="w-4 h-4 text-warm-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18 12H6" /></svg>
                   </td>
@@ -271,7 +229,7 @@ async function handlePro() {
                 </tr>
                 <!-- AI bot traffic tracking -->
                 <tr class="border-b border-border-light">
-                  <td class="px-5 py-3 font-display text-primary">AI bot traffic tracking</td>
+                  <td class="px-5 py-3 font-display text-primary">AI Discovery Test verifies real results</td>
                   <td class="px-5 py-3">
                     <svg class="w-4 h-4 text-warm-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18 12H6" /></svg>
                   </td>
@@ -442,15 +400,15 @@ async function handlePro() {
               </li>
               <li class="flex items-start gap-2.5">
                 <svg class="w-4 h-4 text-score-good flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
-                Unlimited fix generation
+                AI agents start recommending your site
               </li>
               <li class="flex items-start gap-2.5">
                 <svg class="w-4 h-4 text-score-good flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
-                Weekly monitoring & alerts
+                Weekly monitoring ensures you stay visible
               </li>
               <li class="flex items-start gap-2.5">
                 <svg class="w-4 h-4 text-score-good flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
-                AI bot traffic tracking
+                AI Discovery Test verifies real results
               </li>
               <li class="flex items-start gap-2.5">
                 <svg class="w-4 h-4 text-score-good flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>

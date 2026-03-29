@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getScanResult } from '../api.js'
+import AppHeader from '../components/AppHeader.vue'
 import CheckItem from '../components/CheckItem.vue'
 
 const route = useRoute()
@@ -91,24 +92,7 @@ onUnmounted(() => {
 <template>
   <div class="flex-1 flex flex-col">
     <!-- Nav -->
-    <nav class="border-b border-border-light">
-      <div class="max-w-5xl mx-auto px-6 lg:px-8 h-14 flex items-center">
-        <router-link to="/" class="flex items-center gap-2">
-          <svg class="w-5 h-5 text-accent" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2L4 20h4l1.5-4h5L16 20h4L12 2zm0 7l2 5h-4l2-5z" fill="currentColor"/>
-            <path d="M20 8a10 10 0 00-4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
-            <path d="M22 6a14 14 0 00-6-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
-          </svg>
-          <span class="font-display font-bold text-[15px] tracking-tight">AgentCheck</span>
-        </router-link>
-        <router-link to="/" class="btn-ghost text-[13px]">
-          <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-          Back to home
-        </router-link>
-      </div>
-    </nav>
+    <AppHeader show-back="/" back-label="Home" />
 
     <!-- Content -->
     <div class="flex-1 flex items-start justify-center px-6 lg:px-8 py-16 sm:py-20">

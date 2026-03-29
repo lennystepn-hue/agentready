@@ -106,7 +106,7 @@ const primaryDomain = computed(() => latestCompletedScan.value?.domain || '')
 const recentScans = computed(() => scans.value.slice(0, 10))
 
 const filesActive = computed(() =>
-  hostedFiles.value.length > 0 && hostedFiles.value.some(f => f.active || f.url)
+  hostedFiles.value.length > 0 && hostedFiles.value.some(f => f.is_active || f.public_token)
 )
 
 const latestMention = computed(() => {
@@ -174,8 +174,10 @@ async function handleActivateFiles() {
   if (!primaryDomain.value || !latestCompletedScan.value) return
   activatingFiles.value = true
   try {
-    const data = await activateHostedFiles(primaryDomain.value, latestCompletedScan.value.scan_id)
-    hostedFiles.value = Array.isArray(data) ? data : (data.files || [data])
+    await activateHostedFiles(primaryDomain.value, latestCompletedScan.value.scan_id)
+    // Re-fetch to get the full file objects with public_token etc
+    const data = await getHostedFiles()
+    hostedFiles.value = Array.isArray(data) ? data : (data.files || [])
   } catch (e) {
     error.value = e.message || 'Could not activate files.'
   } finally {
@@ -200,7 +202,9 @@ async function handleDiscoverCompetitors() {
   if (!primaryDomain.value) return
   discoveringComps.value = true
   try {
-    const data = await discoverCompetitors(primaryDomain.value)
+    await discoverCompetitors(primaryDomain.value)
+    // Re-fetch to get the saved competitor objects
+    const data = await getCompetitors(primaryDomain.value)
     competitors.value = Array.isArray(data) ? data : (data.competitors || [])
   } catch (e) {
     error.value = e.message || 'Could not discover competitors.'
@@ -268,7 +272,7 @@ onMounted(async () => {
       }).catch(() => {}),
 
       getMentions(domain).then(d => {
-        mentions.value = Array.isArray(d) ? d : (d.mentions || d.weeks || [])
+        mentions.value = Array.isArray(d) ? d : (d.history || d.mentions || [])
       }).catch(() => {}),
 
       getCompetitors(domain).then(d => {
@@ -403,18 +407,18 @@ onMounted(async () => {
                     <div class="space-y-2">
                       <div
                         v-for="file in hostedFiles"
-                        :key="file.filename || file.url"
+                        :key="file.id || file.file_type"
                         class="flex items-center justify-between gap-2 text-xs"
                       >
                         <div class="min-w-0 flex-1">
-                          <p class="font-display font-medium text-primary truncate">{{ file.filename || file.path }}</p>
-                          <p class="text-muted truncate">{{ file.url }}</p>
+                          <p class="font-display font-medium text-primary truncate">{{ file.file_type }}</p>
+                          <p class="text-muted truncate">{{ `${window.location.origin}/hosted/${file.public_token}/${file.file_type}` }}</p>
                         </div>
                         <button
-                          @click="copyToClipboard(file.url)"
+                          @click="copyToClipboard(`${window.location.origin}/hosted/${file.public_token}/${file.file_type}`)"
                           class="text-xs text-accent hover:text-accent-hover font-display font-medium shrink-0"
                         >
-                          {{ copiedUrl === file.url ? 'Copied!' : 'Copy' }}
+                          {{ copiedUrl === `${window.location.origin}/hosted/${file.public_token}/${file.file_type}` ? 'Copied!' : 'Copy URL' }}
                         </button>
                       </div>
                     </div>
@@ -474,9 +478,9 @@ onMounted(async () => {
                       class="flex items-center gap-2 text-[11px]"
                     >
                       <span class="w-1.5 h-1.5 rounded-full shrink-0"
-                        :class="ping.status === 'success' || ping.accepted ? 'bg-score-good' : 'bg-score-bad'" />
-                      <span class="text-muted">{{ formatDate(ping.created_at || ping.pinged_at) }}</span>
-                      <span class="text-secondary">{{ ping.crawlers_pinged || ping.count || '' }} crawlers</span>
+                        :class="ping.status_code >= 200 && ping.status_code < 400 ? 'bg-score-good' : 'bg-score-bad'" />
+                      <span class="text-muted">{{ ping.ping_type }}</span>
+                      <span class="text-secondary truncate">{{ ping.target_url?.replace('https://', '').slice(0, 40) }}</span>
                     </div>
                   </div>
                 </div>
@@ -505,15 +509,15 @@ onMounted(async () => {
                     <div class="space-y-2">
                       <div
                         v-for="comp in shownCompetitors"
-                        :key="comp.domain"
+                        :key="comp.competitor_domain || comp.domain"
                         class="flex items-center justify-between text-xs"
                       >
-                        <span class="font-display font-medium text-primary truncate">{{ comp.domain }}</span>
+                        <span class="font-display font-medium text-primary truncate">{{ comp.competitor_domain || comp.domain }}</span>
                         <span
                           class="font-display font-bold tabular-nums"
-                          :class="scoreColorClass(comp.score ?? comp.last_score)"
+                          :class="scoreColorClass(comp.last_score ?? comp.score)"
                         >
-                          {{ comp.score ?? comp.last_score ?? '—' }}
+                          {{ comp.last_score ?? comp.score ?? '—' }}
                         </span>
                       </div>
                     </div>
@@ -565,20 +569,21 @@ onMounted(async () => {
                         :key="idx"
                         class="border border-border-light rounded p-3"
                       >
-                        <p class="text-xs font-display font-medium text-primary mb-1">{{ sugg.title || sugg.page || `Suggestion ${idx + 1}` }}</p>
-                        <div v-if="sugg.before" class="mb-1">
-                          <p class="text-[10px] text-muted uppercase tracking-wider mb-0.5">Before</p>
-                          <p class="text-xs text-secondary bg-warm-50 rounded p-1.5 line-through">{{ sugg.before }}</p>
+                        <p class="text-xs font-display font-medium text-primary mb-1">{{ sugg.element || sugg.title || `Suggestion ${idx + 1}` }}</p>
+                        <p v-if="sugg.reason" class="text-[11px] text-muted mb-1.5">{{ sugg.reason }}</p>
+                        <div v-if="sugg.current" class="mb-1">
+                          <p class="text-[10px] text-muted uppercase tracking-wider mb-0.5">Current</p>
+                          <p class="text-xs text-secondary bg-warm-50 rounded p-1.5">{{ sugg.current }}</p>
                         </div>
-                        <div v-if="sugg.after">
-                          <p class="text-[10px] text-muted uppercase tracking-wider mb-0.5">After</p>
+                        <div v-if="sugg.suggested">
+                          <p class="text-[10px] text-muted uppercase tracking-wider mb-0.5">Suggested</p>
                           <div class="flex items-start justify-between gap-2">
-                            <p class="text-xs text-primary bg-score-good/5 rounded p-1.5 flex-1">{{ sugg.after }}</p>
+                            <p class="text-xs text-primary bg-score-good/5 rounded p-1.5 flex-1">{{ sugg.suggested }}</p>
                             <button
-                              @click="copyToClipboard(sugg.after)"
+                              @click="copyToClipboard(sugg.suggested)"
                               class="text-[11px] text-accent hover:text-accent-hover font-display font-medium shrink-0 mt-1"
                             >
-                              {{ copiedUrl === sugg.after ? 'Copied!' : 'Copy' }}
+                              {{ copiedUrl === sugg.suggested ? 'Copied!' : 'Copy' }}
                             </button>
                           </div>
                         </div>

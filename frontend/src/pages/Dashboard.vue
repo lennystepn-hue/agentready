@@ -239,6 +239,12 @@ async function handleSimulate() {
   }
 }
 
+const siteOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://agentcheck.site'
+
+function hostedUrl(file) {
+  return `${siteOrigin}/hosted/${file.public_token}/${file.file_type}`
+}
+
 function copyToClipboard(text) {
   navigator.clipboard.writeText(text)
   copiedUrl.value = text
@@ -412,13 +418,13 @@ onMounted(async () => {
                       >
                         <div class="min-w-0 flex-1">
                           <p class="font-display font-medium text-primary truncate">{{ file.file_type }}</p>
-                          <p class="text-muted truncate">{{ `${window.location.origin}/hosted/${file.public_token}/${file.file_type}` }}</p>
+                          <p class="text-muted truncate">{{ hostedUrl(file) }}</p>
                         </div>
                         <button
-                          @click="copyToClipboard(`${window.location.origin}/hosted/${file.public_token}/${file.file_type}`)"
+                          @click="copyToClipboard(hostedUrl(file))"
                           class="text-xs text-accent hover:text-accent-hover font-display font-medium shrink-0"
                         >
-                          {{ copiedUrl === `${window.location.origin}/hosted/${file.public_token}/${file.file_type}` ? 'Copied!' : 'Copy URL' }}
+                          {{ copiedUrl === hostedUrl(file) ? 'Copied!' : 'Copy URL' }}
                         </button>
                       </div>
                     </div>

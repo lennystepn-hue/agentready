@@ -132,3 +132,51 @@ export function runDiscoveryTest(scanId) {
 export function quickDiscovery(domain) {
   return request('POST', '/api/discovery/quick', { domain })
 }
+
+// Hosted Files
+export function activateHostedFiles(domain, scanId) {
+  return request('POST', '/api/hosted-files/activate', { domain, scan_id: scanId })
+}
+export function getHostedFiles() {
+  return request('GET', '/api/hosted-files')
+}
+
+// Crawler Pings
+export function pingCrawlers() {
+  return request('POST', '/api/crawler-ping')
+}
+export function getPingHistory() {
+  return request('GET', '/api/crawler-ping/history')
+}
+
+// Mention Tracking
+export function getMentions(domain) {
+  return request('GET', `/api/mentions/${encodeURIComponent(domain)}`)
+}
+export function trackMentions(domain) {
+  return request('POST', `/api/mentions/${encodeURIComponent(domain)}/track`)
+}
+
+// Competitor Tracking
+export function getCompetitors(domain) {
+  return request('GET', `/api/competitors/${encodeURIComponent(domain)}`)
+}
+export function discoverCompetitors(domain) {
+  return request('POST', `/api/competitors/${encodeURIComponent(domain)}/discover`)
+}
+export function scanCompetitors(domain) {
+  return request('POST', `/api/competitors/${encodeURIComponent(domain)}/scan`)
+}
+export function removeCompetitor(domain, competitor) {
+  return request('DELETE', `/api/competitors/${encodeURIComponent(domain)}/${encodeURIComponent(competitor)}`)
+}
+
+// Content Optimizer
+export function optimizeContent(scanId) {
+  return request('POST', `/api/content-optimize/${scanId}`)
+}
+
+// Agent Simulator
+export function simulateAgent(scanId) {
+  return request('POST', `/api/simulate/${scanId}`)
+}

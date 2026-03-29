@@ -5,8 +5,12 @@ import uuid
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-from db import get_db, get_user_by_id, get_scan
+from db import get_db, get_user_by_id, get_scan, get_hosted_files, get_competitors
 from scanner.orchestrator import run_scan
+from hosted_files import refresh_hosted_files
+from crawler_ping import ping_crawlers
+from mention_tracking import track_mentions
+from competitor_tracking import scan_competitor
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +86,40 @@ async def run_monitoring_cycle():
                 )
 
             logger.info(f"Monitor {monitor_id}: {domain} scanned. Score: {old_score} -> {new_score}")
+
+            user_id = monitor["user_id"]
+
+            # ── Auto: Refresh hosted files ──
+            try:
+                hosted = await get_hosted_files(user_id, domain)
+                if hosted:
+                    updated = await refresh_hosted_files(user_id, domain, scan_id)
+                    logger.info(f"Monitoring: refreshed {updated} hosted files for {domain}")
+            except Exception as e:
+                logger.warning(f"Monitoring: hosted file refresh failed for {domain}: {e}")
+
+            # ── Auto: Ping crawlers ──
+            try:
+                await ping_crawlers(user_id, domain, manual=False)
+                logger.info(f"Monitoring: pinged crawlers for {domain}")
+            except Exception as e:
+                logger.warning(f"Monitoring: crawler ping failed for {domain}: {e}")
+
+            # ── Auto: Track AI mentions ──
+            try:
+                result = await track_mentions(user_id, domain)
+                logger.info(f"Monitoring: mentions for {domain} — {result.get('found', 0)}/{result.get('tested', 0)}")
+            except Exception as e:
+                logger.warning(f"Monitoring: mention tracking failed for {domain}: {e}")
+
+            # ── Auto: Scan competitors ──
+            try:
+                competitors = await get_competitors(user_id, domain)
+                for comp in competitors[:3]:
+                    await scan_competitor(user_id, domain, comp["competitor_domain"])
+                logger.info(f"Monitoring: scanned {min(len(competitors), 3)} competitors for {domain}")
+            except Exception as e:
+                logger.warning(f"Monitoring: competitor scan failed for {domain}: {e}")
 
         except Exception:
             logger.exception(f"Error processing monitor {monitor.get('monitor_id')}")

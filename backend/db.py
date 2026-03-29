@@ -101,6 +101,81 @@ async def init_db() -> None:
         except Exception:
             pass
 
+        # --- New tables for Pro features ---
+        await db.executescript("""
+            CREATE TABLE IF NOT EXISTS hosted_files (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                domain TEXT NOT NULL,
+                file_type TEXT NOT NULL,
+                content TEXT NOT NULL,
+                public_token TEXT UNIQUE NOT NULL,
+                is_active INTEGER NOT NULL DEFAULT 1,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS crawler_pings (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                domain TEXT NOT NULL,
+                ping_type TEXT NOT NULL,
+                target_url TEXT NOT NULL,
+                status_code INTEGER,
+                created_at TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS mention_tracking (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                domain TEXT NOT NULL,
+                week_date TEXT NOT NULL,
+                queries_tested INTEGER NOT NULL DEFAULT 0,
+                queries_found INTEGER NOT NULL DEFAULT 0,
+                results_json TEXT,
+                created_at TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS competitor_tracking (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                domain TEXT NOT NULL,
+                competitor_domain TEXT NOT NULL,
+                last_score INTEGER,
+                last_scan_id TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS content_suggestions (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                scan_id TEXT NOT NULL,
+                suggestions_json TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS agent_simulations (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                scan_id TEXT NOT NULL,
+                site_type TEXT NOT NULL DEFAULT 'generic',
+                steps_json TEXT,
+                completed_steps INTEGER NOT NULL DEFAULT 0,
+                total_steps INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_hosted_files_user ON hosted_files(user_id);
+            CREATE INDEX IF NOT EXISTS idx_hosted_files_token ON hosted_files(public_token);
+            CREATE INDEX IF NOT EXISTS idx_crawler_pings_user ON crawler_pings(user_id);
+            CREATE INDEX IF NOT EXISTS idx_mention_tracking_user ON mention_tracking(user_id);
+            CREATE INDEX IF NOT EXISTS idx_competitor_tracking_user ON competitor_tracking(user_id);
+            CREATE INDEX IF NOT EXISTS idx_content_suggestions_user ON content_suggestions(user_id);
+            CREATE INDEX IF NOT EXISTS idx_agent_simulations_user ON agent_simulations(user_id);
+        """)
+        await db.commit()
+
     finally:
         await db.close()
 
@@ -423,5 +498,276 @@ async def save_scan_insights(scan_id: str, insights: dict) -> None:
             (json.dumps(insights), scan_id),
         )
         await db.commit()
+    finally:
+        await db.close()
+
+
+# ---------------------------------------------------------------------------
+# Hosted files helpers
+# ---------------------------------------------------------------------------
+
+async def save_hosted_file(
+    file_id: str, user_id: str, domain: str, file_type: str, content: str, public_token: str
+) -> None:
+    db = await get_db()
+    try:
+        now = datetime.now(timezone.utc).isoformat()
+        await db.execute(
+            "INSERT INTO hosted_files (id, user_id, domain, file_type, content, public_token, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)",
+            (file_id, user_id, domain, file_type, content, public_token, now, now),
+        )
+        await db.commit()
+    finally:
+        await db.close()
+
+
+async def get_hosted_files(user_id: str, domain: str | None = None) -> list[dict]:
+    db = await get_db()
+    try:
+        if domain:
+            cursor = await db.execute(
+                "SELECT * FROM hosted_files WHERE user_id = ? AND domain = ? AND is_active = 1 ORDER BY created_at DESC",
+                (user_id, domain),
+            )
+        else:
+            cursor = await db.execute(
+                "SELECT * FROM hosted_files WHERE user_id = ? AND is_active = 1 ORDER BY created_at DESC",
+                (user_id,),
+            )
+        rows = await cursor.fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        await db.close()
+
+
+async def get_hosted_file_by_token(public_token: str, file_type: str) -> dict | None:
+    db = await get_db()
+    try:
+        cursor = await db.execute(
+            "SELECT * FROM hosted_files WHERE public_token = ? AND file_type = ? AND is_active = 1",
+            (public_token, file_type),
+        )
+        row = await cursor.fetchone()
+        return dict(row) if row else None
+    finally:
+        await db.close()
+
+
+async def update_hosted_file_content(file_id: str, content: str) -> None:
+    db = await get_db()
+    try:
+        now = datetime.now(timezone.utc).isoformat()
+        await db.execute(
+            "UPDATE hosted_files SET content = ?, updated_at = ? WHERE id = ?",
+            (content, now, file_id),
+        )
+        await db.commit()
+    finally:
+        await db.close()
+
+
+# ---------------------------------------------------------------------------
+# Crawler pings helpers
+# ---------------------------------------------------------------------------
+
+async def save_crawler_ping(
+    ping_id: str, user_id: str, domain: str, ping_type: str, target_url: str, status_code: int | None
+) -> None:
+    db = await get_db()
+    try:
+        now = datetime.now(timezone.utc).isoformat()
+        await db.execute(
+            "INSERT INTO crawler_pings (id, user_id, domain, ping_type, target_url, status_code, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (ping_id, user_id, domain, ping_type, target_url, status_code, now),
+        )
+        await db.commit()
+    finally:
+        await db.close()
+
+
+async def get_crawler_pings(user_id: str, domain: str | None = None, limit: int = 10) -> list[dict]:
+    db = await get_db()
+    try:
+        if domain:
+            cursor = await db.execute(
+                "SELECT * FROM crawler_pings WHERE user_id = ? AND domain = ? ORDER BY created_at DESC LIMIT ?",
+                (user_id, domain, limit),
+            )
+        else:
+            cursor = await db.execute(
+                "SELECT * FROM crawler_pings WHERE user_id = ? ORDER BY created_at DESC LIMIT ?",
+                (user_id, limit),
+            )
+        rows = await cursor.fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        await db.close()
+
+
+async def count_pings_today(user_id: str) -> int:
+    db = await get_db()
+    try:
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        cursor = await db.execute(
+            "SELECT COUNT(*) as cnt FROM crawler_pings WHERE user_id = ? AND created_at LIKE ?",
+            (user_id, f"{today}%"),
+        )
+        row = await cursor.fetchone()
+        return row["cnt"] if row else 0
+    finally:
+        await db.close()
+
+
+# ---------------------------------------------------------------------------
+# Mention tracking helpers
+# ---------------------------------------------------------------------------
+
+async def save_mention_record(
+    record_id: str, user_id: str, domain: str, week_date: str,
+    queries_tested: int, queries_found: int, results_json: str | None
+) -> None:
+    db = await get_db()
+    try:
+        now = datetime.now(timezone.utc).isoformat()
+        await db.execute(
+            "INSERT INTO mention_tracking (id, user_id, domain, week_date, queries_tested, queries_found, results_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (record_id, user_id, domain, week_date, queries_tested, queries_found, results_json, now),
+        )
+        await db.commit()
+    finally:
+        await db.close()
+
+
+async def get_mention_history(user_id: str, domain: str, limit: int = 12) -> list[dict]:
+    db = await get_db()
+    try:
+        cursor = await db.execute(
+            "SELECT * FROM mention_tracking WHERE user_id = ? AND domain = ? ORDER BY week_date DESC LIMIT ?",
+            (user_id, domain, limit),
+        )
+        rows = await cursor.fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        await db.close()
+
+
+# ---------------------------------------------------------------------------
+# Competitor tracking helpers
+# ---------------------------------------------------------------------------
+
+async def save_competitor(
+    comp_id: str, user_id: str, domain: str, competitor_domain: str
+) -> None:
+    db = await get_db()
+    try:
+        now = datetime.now(timezone.utc).isoformat()
+        await db.execute(
+            "INSERT INTO competitor_tracking (id, user_id, domain, competitor_domain, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+            (comp_id, user_id, domain, competitor_domain, now, now),
+        )
+        await db.commit()
+    finally:
+        await db.close()
+
+
+async def get_competitors(user_id: str, domain: str) -> list[dict]:
+    db = await get_db()
+    try:
+        cursor = await db.execute(
+            "SELECT * FROM competitor_tracking WHERE user_id = ? AND domain = ? ORDER BY created_at DESC",
+            (user_id, domain),
+        )
+        rows = await cursor.fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        await db.close()
+
+
+async def update_competitor_score(comp_id: str, last_score: int, last_scan_id: str) -> None:
+    db = await get_db()
+    try:
+        now = datetime.now(timezone.utc).isoformat()
+        await db.execute(
+            "UPDATE competitor_tracking SET last_score = ?, last_scan_id = ?, updated_at = ? WHERE id = ?",
+            (last_score, last_scan_id, now, comp_id),
+        )
+        await db.commit()
+    finally:
+        await db.close()
+
+
+async def delete_competitor(comp_id: str, user_id: str) -> None:
+    db = await get_db()
+    try:
+        await db.execute(
+            "DELETE FROM competitor_tracking WHERE id = ? AND user_id = ?",
+            (comp_id, user_id),
+        )
+        await db.commit()
+    finally:
+        await db.close()
+
+
+# ---------------------------------------------------------------------------
+# Content suggestions helpers
+# ---------------------------------------------------------------------------
+
+async def save_content_suggestions(
+    suggestion_id: str, user_id: str, scan_id: str, suggestions_json: str
+) -> None:
+    db = await get_db()
+    try:
+        now = datetime.now(timezone.utc).isoformat()
+        await db.execute(
+            "INSERT INTO content_suggestions (id, user_id, scan_id, suggestions_json, created_at) VALUES (?, ?, ?, ?, ?)",
+            (suggestion_id, user_id, scan_id, suggestions_json, now),
+        )
+        await db.commit()
+    finally:
+        await db.close()
+
+
+async def get_content_suggestions(scan_id: str) -> dict | None:
+    db = await get_db()
+    try:
+        cursor = await db.execute(
+            "SELECT * FROM content_suggestions WHERE scan_id = ? ORDER BY created_at DESC LIMIT 1",
+            (scan_id,),
+        )
+        row = await cursor.fetchone()
+        return dict(row) if row else None
+    finally:
+        await db.close()
+
+
+# ---------------------------------------------------------------------------
+# Agent simulation helpers
+# ---------------------------------------------------------------------------
+
+async def save_agent_simulation(
+    sim_id: str, user_id: str, scan_id: str, site_type: str,
+    steps_json: str, completed_steps: int, total_steps: int
+) -> None:
+    db = await get_db()
+    try:
+        now = datetime.now(timezone.utc).isoformat()
+        await db.execute(
+            "INSERT INTO agent_simulations (id, user_id, scan_id, site_type, steps_json, completed_steps, total_steps, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (sim_id, user_id, scan_id, site_type, steps_json, completed_steps, total_steps, now),
+        )
+        await db.commit()
+    finally:
+        await db.close()
+
+
+async def get_agent_simulation(scan_id: str) -> dict | None:
+    db = await get_db()
+    try:
+        cursor = await db.execute(
+            "SELECT * FROM agent_simulations WHERE scan_id = ? ORDER BY created_at DESC LIMIT 1",
+            (scan_id,),
+        )
+        row = await cursor.fetchone()
+        return dict(row) if row else None
     finally:
         await db.close()

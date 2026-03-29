@@ -11,7 +11,7 @@ from urllib.parse import urlparse
 
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse
 from pydantic import BaseModel, field_validator
 
 from db import (
@@ -34,6 +34,14 @@ from db import (
     get_user_comparisons,
     get_scan_insights,
     save_scan_insights,
+    get_hosted_files,
+    get_hosted_file_by_token,
+    get_crawler_pings,
+    count_pings_today,
+    get_mention_history,
+    get_competitors,
+    save_competitor,
+    delete_competitor,
 )
 from scanner.orchestrator import run_scan
 from fix_generator import generate_fixes
@@ -48,6 +56,12 @@ from payments import create_checkout_session, handle_webhook_event
 from monitoring import run_monitoring_cycle
 from ai_discovery import run_discovery_test
 from ai_insights import generate_scan_insights
+from hosted_files import activate_hosted_files, refresh_hosted_files
+from crawler_ping import ping_crawlers
+from mention_tracking import track_mentions
+from competitor_tracking import auto_discover_competitors, scan_competitor
+from content_optimizer import optimize_content
+from agent_simulator import run_simulation
 
 logging.basicConfig(
     level=logging.INFO,
@@ -717,6 +731,64 @@ async def get_insights(scan_id: str, user: dict = Depends(get_current_user)):
 
 
 # ---------------------------------------------------------------------------
+# Hosted Files (Pro only)
+# ---------------------------------------------------------------------------
+
+class ActivateHostedFilesRequest(BaseModel):
+    domain: str
+    scan_id: str
+
+
+@app.post("/api/hosted-files/activate")
+async def activate_hosted(
+    body: ActivateHostedFilesRequest,
+    user: dict = Depends(get_current_user),
+):
+    """Generate and host AI files for a domain. Pro only."""
+    if user["plan"] != "pro":
+        raise HTTPException(status_code=403, detail="Pro plan required for hosted files.")
+
+    scan = await get_scan(body.scan_id)
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan not found.")
+    if scan["status"] != "completed":
+        raise HTTPException(status_code=400, detail="Scan must be completed.")
+
+    # Check if files already exist — refresh instead
+    existing = await get_hosted_files(user["id"], body.domain)
+    if existing:
+        files = await refresh_hosted_files(user["id"], body.domain, body.scan_id)
+    else:
+        files = await activate_hosted_files(user["id"], body.domain, body.scan_id)
+
+    return {"files": files}
+
+
+@app.get("/api/hosted-files")
+async def list_hosted_files(
+    user: dict = Depends(get_current_user),
+    domain: str | None = None,
+):
+    """List user's hosted files, optionally filtered by domain."""
+    files = await get_hosted_files(user["id"], domain)
+    return {"files": files}
+
+
+@app.get("/hosted/{token}/{filename}")
+async def serve_hosted_file(token: str, filename: str):
+    """Public endpoint — serves hosted file content as plain text. No auth required."""
+    file_type = filename  # filename is the file_type, e.g. "ai.txt"
+    record = await get_hosted_file_by_token(token, file_type)
+    if not record:
+        raise HTTPException(status_code=404, detail="File not found.")
+
+    return PlainTextResponse(
+        content=record["content"],
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
+
+
+# ---------------------------------------------------------------------------
 # AI Discovery Test
 # ---------------------------------------------------------------------------
 
@@ -761,6 +833,221 @@ async def quick_discovery(body: ScanRequest):
         "queries_found": result["queries_found"],
         # Don't include detailed results for free
     }
+
+
+# ---------------------------------------------------------------------------
+# Crawler Pings (Pro only)
+# ---------------------------------------------------------------------------
+
+class CrawlerPingRequest(BaseModel):
+    domain: str
+
+    @field_validator("domain")
+    @classmethod
+    def validate_domain(cls, v: str) -> str:
+        v = v.strip().lower()
+        if "://" in v:
+            parsed = urlparse(v)
+            v = parsed.netloc or parsed.path
+        v = v.split("/")[0]
+        host = v.split(":")[0]
+        if not host or "." not in host:
+            raise ValueError("Invalid domain.")
+        return v
+
+
+@app.post("/api/crawler-ping")
+async def manual_crawler_ping(
+    body: CrawlerPingRequest,
+    user: dict = Depends(get_current_user),
+):
+    """Manually ping AI crawlers and search engines about content updates. Pro only, max 3/day."""
+    if user["plan"] != "pro":
+        raise HTTPException(status_code=403, detail="Pro plan required for crawler pings.")
+
+    pings_today = await count_pings_today(user["id"])
+    if pings_today >= 3:
+        raise HTTPException(status_code=429, detail="Maximum 3 manual pings per day.")
+
+    results = await ping_crawlers(user["id"], body.domain, manual=True)
+    return {"domain": body.domain, "results": results}
+
+
+@app.get("/api/crawler-ping/history")
+async def crawler_ping_history(user: dict = Depends(get_current_user)):
+    """Get last 20 crawler pings. Pro only."""
+    if user["plan"] != "pro":
+        raise HTTPException(status_code=403, detail="Pro plan required for crawler pings.")
+
+    pings = await get_crawler_pings(user["id"], limit=20)
+    return {"pings": pings}
+
+
+# ---------------------------------------------------------------------------
+# Mention Tracking (Pro only)
+# ---------------------------------------------------------------------------
+
+@app.get("/api/mentions/{domain}")
+async def mention_history(domain: str, user: dict = Depends(get_current_user)):
+    """Get mention tracking history for a domain. Pro only."""
+    if user["plan"] != "pro":
+        raise HTTPException(status_code=403, detail="Pro plan required for mention tracking.")
+
+    history = await get_mention_history(user["id"], domain)
+    return {"domain": domain, "history": history}
+
+
+@app.post("/api/mentions/{domain}/track")
+async def run_mention_tracking(domain: str, user: dict = Depends(get_current_user)):
+    """Run mention tracking for a domain now. Pro only."""
+    if user["plan"] != "pro":
+        raise HTTPException(status_code=403, detail="Pro plan required for mention tracking.")
+
+    result = await track_mentions(user["id"], domain)
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Competitor Tracking (Pro only)
+# ---------------------------------------------------------------------------
+
+@app.get("/api/competitors/{domain}")
+async def list_competitors(domain: str, user: dict = Depends(get_current_user)):
+    """List tracked competitors for a domain. Pro only."""
+    if user["plan"] != "pro":
+        raise HTTPException(status_code=403, detail="Pro plan required for competitor tracking.")
+
+    competitors = await get_competitors(user["id"], domain)
+    return {"domain": domain, "competitors": competitors}
+
+
+class DiscoverCompetitorsRequest(BaseModel):
+    scan_id: str
+
+
+@app.post("/api/competitors/{domain}/discover")
+async def discover_competitors(
+    domain: str,
+    body: DiscoverCompetitorsRequest,
+    user: dict = Depends(get_current_user),
+):
+    """AI-discover competitors from scan insights. Pro only."""
+    if user["plan"] != "pro":
+        raise HTTPException(status_code=403, detail="Pro plan required for competitor tracking.")
+
+    discovered = await auto_discover_competitors(user["id"], domain, body.scan_id)
+
+    # Save any newly discovered competitors
+    existing = await get_competitors(user["id"], domain)
+    existing_domains = {c["competitor_domain"] for c in existing}
+    added = []
+    for comp_domain in discovered:
+        if comp_domain not in existing_domains:
+            comp_id = str(uuid.uuid4())
+            await save_competitor(comp_id, user["id"], domain, comp_domain)
+            added.append(comp_domain)
+
+    return {"domain": domain, "discovered": discovered, "added": added}
+
+
+@app.post("/api/competitors/{domain}/scan")
+async def scan_competitors(
+    domain: str,
+    background_tasks: BackgroundTasks,
+    user: dict = Depends(get_current_user),
+):
+    """Scan all tracked competitors (max 3). Pro only."""
+    if user["plan"] != "pro":
+        raise HTTPException(status_code=403, detail="Pro plan required for competitor tracking.")
+
+    competitors = await get_competitors(user["id"], domain)
+    if not competitors:
+        raise HTTPException(status_code=404, detail="No competitors tracked for this domain.")
+
+    # Limit to 3 competitors
+    to_scan = competitors[:3]
+    results = []
+    for comp in to_scan:
+        score = await scan_competitor(user["id"], domain, comp["competitor_domain"])
+        results.append({
+            "competitor": comp["competitor_domain"],
+            "score": score,
+        })
+
+    return {"domain": domain, "results": results}
+
+
+@app.delete("/api/competitors/{domain}/{competitor}")
+async def remove_competitor(
+    domain: str,
+    competitor: str,
+    user: dict = Depends(get_current_user),
+):
+    """Remove a tracked competitor. Pro only."""
+    if user["plan"] != "pro":
+        raise HTTPException(status_code=403, detail="Pro plan required for competitor tracking.")
+
+    # Find the competitor record to get its id
+    competitors = await get_competitors(user["id"], domain)
+    comp_record = None
+    for c in competitors:
+        if c["competitor_domain"] == competitor:
+            comp_record = c
+            break
+
+    if not comp_record:
+        raise HTTPException(status_code=404, detail="Competitor not found.")
+
+    await delete_competitor(comp_record["id"], user["id"])
+    return {"message": f"Competitor {competitor} removed."}
+
+
+# ---------------------------------------------------------------------------
+# Content Optimizer (Pro only)
+# ---------------------------------------------------------------------------
+
+@app.post("/api/content-optimize/{scan_id}")
+async def content_optimize(scan_id: str, user: dict = Depends(get_current_user)):
+    """GPT-powered content optimization suggestions. Pro only. Cached."""
+    user_data = await get_user_by_id(user["id"])
+    if not user_data or user_data.get("plan") != "pro":
+        raise HTTPException(status_code=403, detail="Content optimization is a Pro feature.")
+
+    scan = await get_scan(scan_id)
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan not found.")
+    if scan["status"] != "completed":
+        raise HTTPException(status_code=400, detail="Scan must be completed.")
+
+    result = await optimize_content(user["id"], scan_id)
+    if "error" in result:
+        raise HTTPException(status_code=500, detail=result["error"])
+
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Agent Simulator (Pro only)
+# ---------------------------------------------------------------------------
+
+@app.post("/api/simulate/{scan_id}")
+async def simulate_agent(scan_id: str, user: dict = Depends(get_current_user)):
+    """Simulate an AI agent navigating the site step by step. Pro only. Cached."""
+    user_data = await get_user_by_id(user["id"])
+    if not user_data or user_data.get("plan") != "pro":
+        raise HTTPException(status_code=403, detail="Agent simulation is a Pro feature.")
+
+    scan = await get_scan(scan_id)
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan not found.")
+    if scan["status"] != "completed":
+        raise HTTPException(status_code=400, detail="Scan must be completed.")
+
+    result = await run_simulation(user["id"], scan_id)
+    if "error" in result:
+        raise HTTPException(status_code=500, detail=result["error"])
+
+    return result
 
 
 if __name__ == "__main__":

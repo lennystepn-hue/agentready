@@ -2,33 +2,46 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { isLoggedIn, isPro, user } from '../auth.js'
-import { getUserScans, getMonitors, startScan } from '../api.js'
 import ScoreCircle from '../components/ScoreCircle.vue'
-import AppLayout from '../components/AppLayout.vue'
+import MentionChart from '../components/MentionChart.vue'
+import StepFlow from '../components/StepFlow.vue'
 import UpgradeCard from '../components/UpgradeCard.vue'
+import AppLayout from '../components/AppLayout.vue'
+import {
+  getUserScans, getMonitors, startScan,
+  getHostedFiles, activateHostedFiles,
+  pingCrawlers, getPingHistory,
+  getMentions, getCompetitors, discoverCompetitors,
+  optimizeContent, simulateAgent,
+} from '../api.js'
 
 const router = useRouter()
 
 const scans = ref([])
-const monitors = ref([])
 const loadingScans = ref(true)
-const loadingMonitors = ref(false)
 const error = ref('')
 const scanDomain = ref('')
 const scanning = ref(false)
 
-async function handleScan() {
-  if (!scanDomain.value.trim()) return
-  scanning.value = true
-  try {
-    const result = await startScan(scanDomain.value.trim())
-    router.push({ name: 'ScanProgress', params: { id: result.scan_id } })
-  } catch (e) {
-    error.value = e.message || 'Could not start scan.'
-  } finally {
-    scanning.value = false
-  }
-}
+// Pro feature data
+const hostedFiles = ref([])
+const pingHistory = ref([])
+const mentions = ref([])
+const competitors = ref([])
+const contentSuggs = ref(null)
+const simulation = ref(null)
+const monitors = ref([])
+
+// Loading/action states
+const activatingFiles = ref(false)
+const pinging = ref(false)
+const discoveringComps = ref(false)
+const optimizing = ref(false)
+const simulating = ref(false)
+
+// UI state
+const suggestionsExpanded = ref(false)
+const copiedUrl = ref('')
 
 function gradeFor(score) {
   if (score == null) return '—'
@@ -55,6 +68,13 @@ function formatDate(dateStr) {
   })
 }
 
+function formatTime(dateStr) {
+  if (!dateStr) return ''
+  return new Date(dateStr).toLocaleTimeString('en-US', {
+    hour: 'numeric', minute: '2-digit',
+  })
+}
+
 function normalizeScan(s) {
   return {
     scan_id: s.scan_id || s.id,
@@ -76,33 +96,152 @@ const bestScan = computed(() => {
   return completedScans.value.reduce((a, b) => (a.score > b.score ? a : b))
 })
 
-const avgScore = computed(() => {
+const latestCompletedScan = computed(() => {
   if (completedScans.value.length === 0) return null
-  const sum = completedScans.value.reduce((a, b) => a + b.score, 0)
-  return Math.round(sum / completedScans.value.length)
+  return completedScans.value[0]
 })
 
-const uniqueDomains = computed(() => {
-  const domains = new Set(completedScans.value.map(s => s.domain))
-  return domains.size
-})
+const primaryDomain = computed(() => latestCompletedScan.value?.domain || '')
 
 const recentScans = computed(() => scans.value.slice(0, 10))
 
-const proFeatures = [
-  { title: 'Competitor Compare', desc: 'Side-by-side analysis of up to 4 domains.', to: '/compare' },
-  { title: 'Monitoring', desc: 'Weekly re-scans and score change alerts.', to: '/monitoring' },
-  { title: 'Score History', desc: 'Track your score improvements over time.', to: '/history' },
-  {
-    title: 'AI Discovery',
-    desc: 'Check if AI agents actually recommend your site.',
-    to: computed(() =>
-      completedScans.value.length > 0
-        ? { name: 'Report', params: { id: completedScans.value[0].scan_id }, hash: '#discovery' }
-        : '/'
-    ),
-  },
-]
+const filesActive = computed(() =>
+  hostedFiles.value.length > 0 && hostedFiles.value.some(f => f.active || f.url)
+)
+
+const latestMention = computed(() => {
+  if (!mentions.value || mentions.value.length === 0) return null
+  return mentions.value[0]
+})
+
+const mentionFoundCount = computed(() => {
+  if (!latestMention.value) return 0
+  return latestMention.value.queries_found || 0
+})
+
+const mentionTestedCount = computed(() => {
+  if (!latestMention.value) return 0
+  return latestMention.value.queries_tested || 0
+})
+
+const mentionTrend = computed(() => {
+  if (mentions.value.length < 2) return 0
+  const curr = mentions.value[0]?.queries_found || 0
+  const prev = mentions.value[1]?.queries_found || 0
+  return curr - prev
+})
+
+const lastPing = computed(() => {
+  if (pingHistory.value.length === 0) return null
+  return pingHistory.value[0]
+})
+
+const recentPings = computed(() => pingHistory.value.slice(0, 3))
+
+const pingsRemaining = computed(() => {
+  const today = new Date().toISOString().slice(0, 10)
+  const todayPings = pingHistory.value.filter(p =>
+    (p.created_at || p.pinged_at || '').startsWith(today)
+  ).length
+  return Math.max(0, 3 - todayPings)
+})
+
+const shownCompetitors = computed(() => competitors.value.slice(0, 3))
+
+const simulationRate = computed(() => {
+  if (!simulation.value?.steps) return 0
+  const steps = simulation.value.steps
+  const passed = steps.filter(s => s.status === 'pass').length
+  return steps.length > 0 ? Math.round((passed / steps.length) * 100) : 0
+})
+
+// ---- Actions ----
+
+async function handleScan() {
+  if (!scanDomain.value.trim()) return
+  scanning.value = true
+  try {
+    const result = await startScan(scanDomain.value.trim())
+    router.push({ name: 'ScanProgress', params: { id: result.scan_id } })
+  } catch (e) {
+    error.value = e.message || 'Could not start scan.'
+  } finally {
+    scanning.value = false
+  }
+}
+
+async function handleActivateFiles() {
+  if (!primaryDomain.value || !latestCompletedScan.value) return
+  activatingFiles.value = true
+  try {
+    const data = await activateHostedFiles(primaryDomain.value, latestCompletedScan.value.scan_id)
+    hostedFiles.value = Array.isArray(data) ? data : (data.files || [data])
+  } catch (e) {
+    error.value = e.message || 'Could not activate files.'
+  } finally {
+    activatingFiles.value = false
+  }
+}
+
+async function handlePing() {
+  pinging.value = true
+  try {
+    await pingCrawlers()
+    const data = await getPingHistory()
+    pingHistory.value = Array.isArray(data) ? data : (data.pings || data.history || [])
+  } catch (e) {
+    error.value = e.message || 'Ping failed.'
+  } finally {
+    pinging.value = false
+  }
+}
+
+async function handleDiscoverCompetitors() {
+  if (!primaryDomain.value) return
+  discoveringComps.value = true
+  try {
+    const data = await discoverCompetitors(primaryDomain.value)
+    competitors.value = Array.isArray(data) ? data : (data.competitors || [])
+  } catch (e) {
+    error.value = e.message || 'Could not discover competitors.'
+  } finally {
+    discoveringComps.value = false
+  }
+}
+
+async function handleOptimize() {
+  if (!latestCompletedScan.value) return
+  optimizing.value = true
+  try {
+    const data = await optimizeContent(latestCompletedScan.value.scan_id)
+    contentSuggs.value = data
+  } catch (e) {
+    error.value = e.message || 'Could not generate suggestions.'
+  } finally {
+    optimizing.value = false
+  }
+}
+
+async function handleSimulate() {
+  if (!latestCompletedScan.value) return
+  simulating.value = true
+  try {
+    const data = await simulateAgent(latestCompletedScan.value.scan_id)
+    simulation.value = data
+  } catch (e) {
+    error.value = e.message || 'Simulation failed.'
+  } finally {
+    simulating.value = false
+  }
+}
+
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text)
+  copiedUrl.value = text
+  setTimeout(() => { copiedUrl.value = '' }, 2000)
+}
+
+// ---- Data Loading ----
 
 onMounted(async () => {
   try {
@@ -115,16 +254,38 @@ onMounted(async () => {
     loadingScans.value = false
   }
 
-  if (isPro.value) {
-    loadingMonitors.value = true
-    try {
-      const data = await getMonitors()
-      monitors.value = Array.isArray(data) ? data : (data.monitors || [])
-    } catch {
-      // non-critical
-    } finally {
-      loadingMonitors.value = false
-    }
+  if (isPro.value && primaryDomain.value) {
+    const domain = primaryDomain.value
+    const scanId = latestCompletedScan.value?.scan_id
+
+    const loads = [
+      getHostedFiles().then(d => {
+        hostedFiles.value = Array.isArray(d) ? d : (d.files || [])
+      }).catch(() => {}),
+
+      getPingHistory().then(d => {
+        pingHistory.value = Array.isArray(d) ? d : (d.pings || d.history || [])
+      }).catch(() => {}),
+
+      getMentions(domain).then(d => {
+        mentions.value = Array.isArray(d) ? d : (d.mentions || d.weeks || [])
+      }).catch(() => {}),
+
+      getCompetitors(domain).then(d => {
+        competitors.value = Array.isArray(d) ? d : (d.competitors || [])
+      }).catch(() => {}),
+
+      getMonitors().then(d => {
+        monitors.value = Array.isArray(d) ? d : (d.monitors || [])
+      }).catch(() => {}),
+    ]
+
+    await Promise.allSettled(loads)
+  } else if (isPro.value) {
+    // Pro but no scans yet, still load monitors
+    getMonitors().then(d => {
+      monitors.value = Array.isArray(d) ? d : (d.monitors || [])
+    }).catch(() => {})
   }
 })
 </script>
@@ -132,63 +293,10 @@ onMounted(async () => {
 <template>
   <AppLayout>
     <div class="flex-1 pb-16 sm:pb-0">
-
-      <!-- 1. Hero / Status Area -->
-      <div class="border-b border-border-light bg-warm-50">
-        <div class="max-w-5xl mx-auto px-6 lg:px-8 py-10 animate-fade-in">
-          <template v-if="!loadingScans && completedScans.length > 0">
-            <div class="flex flex-col sm:flex-row items-center gap-6">
-              <ScoreCircle :score="bestScan.score" :size="120" />
-              <div>
-                <h1 class="font-display text-2xl font-bold tracking-tight text-primary">Your AI Visibility</h1>
-                <p v-if="isPro" class="text-sm text-secondary mt-1 max-w-md">
-                  AI agents are learning about your sites. Keep improving.
-                </p>
-                <p v-else class="text-sm text-secondary mt-1 max-w-md">
-                  Your sites may be invisible to AI agents. Upgrade to fix that.
-                </p>
-                <div class="flex items-center gap-2 mt-2">
-                  <span
-                    class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-display font-bold uppercase tracking-wider"
-                    :class="isPro ? 'bg-accent text-white' : 'bg-warm-200 text-warm-600'"
-                  >
-                    {{ isPro ? 'Pro' : 'Free' }}
-                  </span>
-                  <span class="text-xs text-muted">{{ user?.email }}</span>
-                </div>
-              </div>
-            </div>
-          </template>
-          <template v-else-if="!loadingScans">
-            <h1 class="font-display text-2xl font-bold tracking-tight text-primary">Welcome to AgentCheck</h1>
-            <p class="text-sm text-secondary mt-1 max-w-md">
-              Run your first scan to see how visible your site is to AI agents.
-            </p>
-            <div class="flex items-center gap-2 mt-3">
-              <span
-                class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-display font-bold uppercase tracking-wider"
-                :class="isPro ? 'bg-accent text-white' : 'bg-warm-200 text-warm-600'"
-              >
-                {{ isPro ? 'Pro' : 'Free' }}
-              </span>
-              <span class="text-xs text-muted">{{ user?.email }}</span>
-            </div>
-          </template>
-          <template v-else>
-            <div class="h-20 flex items-center">
-              <svg class="w-5 h-5 text-accent animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-            </div>
-          </template>
-        </div>
-      </div>
-
       <div class="max-w-5xl mx-auto px-6 lg:px-8 py-8">
 
-        <!-- 2. Inline Scan Bar -->
-        <section class="mb-10 animate-slide-up">
+        <!-- 1. Scan Bar -->
+        <section class="mb-8 animate-fade-in">
           <form @submit.prevent="handleScan" class="flex gap-3">
             <input
               v-model="scanDomain"
@@ -207,177 +315,421 @@ onMounted(async () => {
           <p v-if="error" class="text-sm text-score-bad mt-2">{{ error }}</p>
         </section>
 
-        <!-- 3. Stats Row -->
-        <section v-if="completedScans.length > 0" class="mb-10 animate-slide-up" style="animation-delay: 60ms">
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div class="border border-border rounded-lg p-5 bg-surface">
-              <p class="text-xs text-muted font-display uppercase tracking-wider mb-2">Total scans</p>
-              <p class="font-display text-2xl font-bold text-primary tabular-nums">{{ completedScans.length }}</p>
-            </div>
-            <div class="border border-border rounded-lg p-5 bg-surface">
-              <p class="text-xs text-muted font-display uppercase tracking-wider mb-2">Average score</p>
-              <p class="font-display text-2xl font-bold tabular-nums" :class="scoreColorClass(avgScore)">{{ avgScore }}</p>
-            </div>
-            <div class="border border-border rounded-lg p-5 bg-surface">
-              <p class="text-xs text-muted font-display uppercase tracking-wider mb-2">Best score</p>
-              <p class="font-display text-2xl font-bold tabular-nums" :class="scoreColorClass(bestScan?.score)">
-                {{ bestScan?.score ?? '—' }}
-              </p>
-            </div>
-            <div class="border border-border rounded-lg p-5 bg-surface">
-              <p class="text-xs text-muted font-display uppercase tracking-wider mb-2">Sites monitored</p>
-              <p class="font-display text-2xl font-bold text-primary tabular-nums">
-                {{ isPro ? monitors.length : '—' }}
-              </p>
-            </div>
-          </div>
-        </section>
+        <!-- Loading state -->
+        <div v-if="loadingScans" class="py-12 text-center">
+          <svg class="w-5 h-5 text-accent animate-spin mx-auto mb-2" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          <p class="text-sm text-muted">Loading dashboard...</p>
+        </div>
 
-        <!-- 4. Recent Scans -->
-        <section class="mb-10 animate-slide-up" style="animation-delay: 120ms">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="font-display text-lg font-bold tracking-tight">Recent scans</h2>
-            <router-link to="/" class="text-[13px] text-accent hover:text-accent-hover transition-colors font-display font-medium">
-              + New scan
-            </router-link>
-          </div>
+        <template v-else>
 
-          <div v-if="loadingScans" class="py-12 text-center">
-            <svg class="w-5 h-5 text-accent animate-spin mx-auto mb-2" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
-            <p class="text-sm text-muted">Loading scans...</p>
-          </div>
-
-          <div v-else-if="scans.length === 0" class="border border-dashed border-border rounded-lg p-10 text-center">
-            <p class="font-display font-semibold text-primary mb-1">No scans yet</p>
-            <p class="text-sm text-secondary mb-5">Run your first scan to see how your site performs with AI agents.</p>
-            <button @click="$refs.domainInput?.focus()" class="btn-primary px-6">
-              Run a scan
-            </button>
-          </div>
-
-          <div v-else class="space-y-2">
-            <router-link
-              v-for="scan in recentScans"
-              :key="scan.scan_id"
-              :to="scan.status === 'completed' ? { name: 'Report', params: { id: scan.scan_id } } : { name: 'ScanProgress', params: { id: scan.scan_id } }"
-              class="flex items-center gap-5 px-5 py-4 border border-border rounded-lg bg-surface hover:border-warm-300 transition-colors group cursor-pointer"
-            >
-              <!-- Score circle or spinner -->
-              <div class="flex-shrink-0 w-12 h-12 flex items-center justify-center">
-                <ScoreCircle v-if="scan.status === 'completed' && scan.score != null" :score="scan.score" :size="48" />
-                <div v-else-if="scan.status === 'pending' || scan.status === 'running'" class="w-10 h-10 rounded-full border-2 border-accent/30 flex items-center justify-center">
-                  <svg class="w-5 h-5 text-accent animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                </div>
-                <div v-else class="w-10 h-10 rounded-full border-2 border-score-bad/30 flex items-center justify-center">
-                  <span class="text-xs text-score-bad font-display font-bold">ERR</span>
-                </div>
-              </div>
-
-              <!-- Info -->
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 flex-wrap">
-                  <p class="text-sm font-display font-semibold text-primary truncate group-hover:text-accent transition-colors">
-                    {{ scan.domain }}
+          <!-- 2. Hero Row -->
+          <section v-if="completedScans.length > 0" class="mb-8 animate-slide-up">
+            <div class="grid sm:grid-cols-2 gap-4">
+              <!-- Left: Score -->
+              <div class="border border-border rounded-lg p-5 bg-surface flex items-center gap-5">
+                <ScoreCircle :score="bestScan.score" :grade="bestScan.grade" :size="120" />
+                <div>
+                  <p class="font-display font-semibold text-sm text-primary">Your AI Visibility</p>
+                  <p class="font-display text-3xl font-bold tabular-nums mt-1" :class="scoreColorClass(bestScan.score)">
+                    {{ bestScan.score }}
                   </p>
-                  <span
-                    v-if="scan.site_type"
-                    class="text-[10px] font-display font-medium uppercase tracking-wider text-warm-500 bg-warm-100 px-1.5 py-0.5 rounded"
-                  >
-                    {{ scan.site_type }}
+                  <p class="text-xs text-muted mt-1">
+                    Grade: <span class="font-display font-semibold" :class="scoreColorClass(bestScan.score)">{{ bestScan.grade }}</span>
+                  </p>
+                </div>
+              </div>
+
+              <!-- Right: AI Mention Trend (Pro) -->
+              <div v-if="isPro && mentions.length > 0" class="border border-border rounded-lg p-5 bg-surface">
+                <div class="flex items-center justify-between mb-3">
+                  <p class="font-display font-semibold text-sm text-primary">AI Mention Trend</p>
+                  <span class="text-[10px] font-display font-bold uppercase tracking-wider text-accent bg-accent/10 px-1.5 py-0.5 rounded">Pro</span>
+                </div>
+                <MentionChart :data="mentions" />
+                <div class="flex items-center gap-2 mt-3">
+                  <p class="text-xs text-secondary">
+                    Found in {{ mentionFoundCount }}/{{ mentionTestedCount }} queries this week
+                  </p>
+                  <span v-if="mentionTrend > 0" class="text-xs text-score-good font-display font-medium">
+                    &#9650; +{{ mentionTrend }}
                   </span>
-                  <span
-                    v-if="scan.status === 'completed' && scan.score != null"
-                    class="text-xs font-display font-bold px-1.5 py-0.5 rounded"
-                    :class="{
-                      'bg-score-good/10 text-score-good': scan.score >= 70,
-                      'bg-score-medium/10 text-score-medium': scan.score >= 40 && scan.score < 70,
-                      'bg-score-bad/10 text-score-bad': scan.score < 40,
-                    }"
-                  >
-                    {{ scan.grade }}
+                  <span v-else-if="mentionTrend < 0" class="text-xs text-score-bad font-display font-medium">
+                    &#9660; {{ mentionTrend }}
                   </span>
-                  <span
-                    v-else-if="scan.status === 'running' || scan.status === 'pending'"
-                    class="text-[11px] font-display text-accent bg-accent/10 px-1.5 py-0.5 rounded"
-                  >
-                    Scanning...
+                  <span v-else class="text-xs text-muted font-display font-medium">
+                    &#8212; No change
                   </span>
                 </div>
-                <p class="text-xs text-muted mt-0.5">
-                  <span v-if="scan.created_at">{{ formatDate(scan.created_at) }}</span>
-                </p>
               </div>
 
-              <!-- Arrow -->
-              <svg class="w-4 h-4 text-warm-300 group-hover:text-accent transition-colors flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </router-link>
-          </div>
-        </section>
-
-        <!-- 5. Pro Features Section -->
-        <section class="mb-10 animate-slide-up" style="animation-delay: 160ms">
-          <!-- Free users: UpgradeCard -->
-          <UpgradeCard v-if="!isPro" />
-
-          <!-- Pro users: 2x2 feature grid -->
-          <div v-else class="grid sm:grid-cols-2 gap-4">
-            <router-link
-              v-for="feat in proFeatures"
-              :key="feat.title"
-              :to="typeof feat.to === 'object' && feat.to?.value !== undefined ? feat.to.value : feat.to"
-              class="border border-border rounded-lg p-5 bg-surface hover:border-warm-300 transition-colors group"
-            >
-              <div class="flex items-center justify-between">
-                <h4 class="font-display font-semibold text-sm text-primary group-hover:text-accent transition-colors">
-                  {{ feat.title }}
-                </h4>
-                <svg class="w-4 h-4 text-warm-300 group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-              <p class="text-xs text-secondary mt-1">{{ feat.desc }}</p>
-            </router-link>
-          </div>
-        </section>
-
-        <!-- 6. Monitored Domains (Pro only) -->
-        <section v-if="isPro && monitors.length > 0" class="mb-10 animate-slide-up" style="animation-delay: 200ms">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="font-display text-lg font-bold tracking-tight">Monitored domains</h2>
-            <router-link to="/monitoring" class="text-[13px] text-accent hover:text-accent-hover transition-colors font-display font-medium">
-              Manage
-            </router-link>
-          </div>
-          <div class="space-y-2">
-            <div
-              v-for="mon in monitors"
-              :key="mon.id"
-              class="flex items-center gap-4 px-5 py-3.5 border border-border rounded-lg bg-surface"
-            >
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-display font-semibold text-primary truncate">{{ mon.domain }}</p>
+              <!-- Right fallback for free users or no mentions -->
+              <div v-else class="border border-border rounded-lg p-5 bg-surface flex flex-col justify-center">
+                <p class="font-display font-semibold text-sm text-primary mb-1">AI Mention Trend</p>
                 <p class="text-xs text-muted">
-                  Last score: <span class="font-display font-semibold" :class="scoreColorClass(mon.last_score)">{{ mon.last_score ?? '—' }}</span>
+                  <template v-if="!isPro">Upgrade to Pro to track AI mentions of your site.</template>
+                  <template v-else>Run a mention scan to see how often AI agents reference your domain.</template>
                 </p>
               </div>
-              <router-link
-                :to="{ name: 'History', params: { domain: mon.domain } }"
-                class="text-[13px] text-accent hover:text-accent-hover transition-colors font-display font-medium"
-              >
-                View history
+            </div>
+          </section>
+
+          <!-- No scans yet -->
+          <section v-else class="mb-8 animate-slide-up">
+            <div class="border border-dashed border-border rounded-lg p-10 text-center">
+              <p class="font-display font-semibold text-primary mb-1">No scans yet</p>
+              <p class="text-sm text-secondary mb-5">Run your first scan to see how your site performs with AI agents.</p>
+            </div>
+          </section>
+
+          <!-- PRO WIDGETS -->
+          <template v-if="isPro">
+
+            <!-- 3. Automation Row -->
+            <section class="mb-8 animate-slide-up" style="animation-delay: 60ms">
+              <div class="grid sm:grid-cols-2 gap-4">
+
+                <!-- Hosted Files Card -->
+                <div class="border border-border rounded-lg p-5 bg-surface">
+                  <div class="flex items-center justify-between mb-3">
+                    <p class="font-display font-semibold text-sm text-primary">Hosted Files</p>
+                    <span class="text-[10px] font-display font-bold uppercase tracking-wider text-accent bg-accent/10 px-1.5 py-0.5 rounded">Pro</span>
+                  </div>
+
+                  <template v-if="filesActive">
+                    <div class="space-y-2">
+                      <div
+                        v-for="file in hostedFiles"
+                        :key="file.filename || file.url"
+                        class="flex items-center justify-between gap-2 text-xs"
+                      >
+                        <div class="min-w-0 flex-1">
+                          <p class="font-display font-medium text-primary truncate">{{ file.filename || file.path }}</p>
+                          <p class="text-muted truncate">{{ file.url }}</p>
+                        </div>
+                        <button
+                          @click="copyToClipboard(file.url)"
+                          class="text-xs text-accent hover:text-accent-hover font-display font-medium shrink-0"
+                        >
+                          {{ copiedUrl === file.url ? 'Copied!' : 'Copy' }}
+                        </button>
+                      </div>
+                    </div>
+                    <p v-if="hostedFiles[0]?.updated_at" class="text-[11px] text-muted mt-3">
+                      Last updated: {{ formatDate(hostedFiles[0].updated_at) }}
+                    </p>
+                  </template>
+
+                  <template v-else>
+                    <p class="text-xs text-secondary mb-3">
+                      Generate and host AI-ready files (llms.txt, robots.txt directives) on your domain.
+                    </p>
+                    <button
+                      @click="handleActivateFiles"
+                      :disabled="activatingFiles || !primaryDomain"
+                      class="text-xs text-accent hover:text-accent-hover font-display font-medium disabled:opacity-50"
+                    >
+                      <template v-if="activatingFiles">
+                        <svg class="w-3 h-3 animate-spin inline mr-1" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                        Activating...
+                      </template>
+                      <template v-else>Activate AI Files</template>
+                    </button>
+                  </template>
+                </div>
+
+                <!-- Crawler Status Card -->
+                <div class="border border-border rounded-lg p-5 bg-surface">
+                  <div class="flex items-center justify-between mb-3">
+                    <p class="font-display font-semibold text-sm text-primary">Crawler Status</p>
+                    <button
+                      @click="handlePing"
+                      :disabled="pinging || pingsRemaining <= 0"
+                      class="text-xs text-accent hover:text-accent-hover font-display font-medium disabled:opacity-50"
+                    >
+                      <template v-if="pinging">
+                        <svg class="w-3 h-3 animate-spin inline mr-1" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                        Pinging...
+                      </template>
+                      <template v-else>Ping now</template>
+                    </button>
+                  </div>
+
+                  <div v-if="lastPing" class="mb-2">
+                    <p class="text-xs text-secondary">
+                      Last ping: {{ formatDate(lastPing.created_at || lastPing.pinged_at) }} at {{ formatTime(lastPing.created_at || lastPing.pinged_at) }}
+                    </p>
+                  </div>
+                  <p v-else class="text-xs text-muted mb-2">No pings sent yet.</p>
+
+                  <p class="text-[11px] text-muted mb-3">{{ pingsRemaining }} pings remaining today</p>
+
+                  <div v-if="recentPings.length > 0" class="space-y-1">
+                    <div
+                      v-for="(ping, idx) in recentPings"
+                      :key="idx"
+                      class="flex items-center gap-2 text-[11px]"
+                    >
+                      <span class="w-1.5 h-1.5 rounded-full shrink-0"
+                        :class="ping.status === 'success' || ping.accepted ? 'bg-score-good' : 'bg-score-bad'" />
+                      <span class="text-muted">{{ formatDate(ping.created_at || ping.pinged_at) }}</span>
+                      <span class="text-secondary">{{ ping.crawlers_pinged || ping.count || '' }} crawlers</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- 4. Intelligence Row -->
+            <section class="mb-8 animate-slide-up" style="animation-delay: 120ms">
+              <div class="grid sm:grid-cols-2 gap-4">
+
+                <!-- Competitor Tracking Card -->
+                <div class="border border-border rounded-lg p-5 bg-surface">
+                  <div class="flex items-center justify-between mb-3">
+                    <p class="font-display font-semibold text-sm text-primary">Competitor Tracking</p>
+                    <template v-if="competitors.length > 0">
+                      <router-link
+                        :to="{ path: '/compare' }"
+                        class="text-xs text-accent hover:text-accent-hover font-display font-medium"
+                      >
+                        Scan all
+                      </router-link>
+                    </template>
+                  </div>
+
+                  <template v-if="shownCompetitors.length > 0">
+                    <div class="space-y-2">
+                      <div
+                        v-for="comp in shownCompetitors"
+                        :key="comp.domain"
+                        class="flex items-center justify-between text-xs"
+                      >
+                        <span class="font-display font-medium text-primary truncate">{{ comp.domain }}</span>
+                        <span
+                          class="font-display font-bold tabular-nums"
+                          :class="scoreColorClass(comp.score ?? comp.last_score)"
+                        >
+                          {{ comp.score ?? comp.last_score ?? '—' }}
+                        </span>
+                      </div>
+                    </div>
+                    <p v-if="competitors.length > 3" class="text-[11px] text-muted mt-2">
+                      + {{ competitors.length - 3 }} more
+                    </p>
+                  </template>
+
+                  <template v-else>
+                    <p class="text-xs text-secondary mb-3">
+                      Find and track competitors in your space to compare AI visibility.
+                    </p>
+                    <button
+                      @click="handleDiscoverCompetitors"
+                      :disabled="discoveringComps || !primaryDomain"
+                      class="text-xs text-accent hover:text-accent-hover font-display font-medium disabled:opacity-50"
+                    >
+                      <template v-if="discoveringComps">
+                        <svg class="w-3 h-3 animate-spin inline mr-1" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                        Discovering...
+                      </template>
+                      <template v-else>Discover competitors</template>
+                    </button>
+                  </template>
+                </div>
+
+                <!-- Content Suggestions Card -->
+                <div class="border border-border rounded-lg p-5 bg-surface">
+                  <div class="flex items-center justify-between mb-3">
+                    <p class="font-display font-semibold text-sm text-primary">Content Suggestions</p>
+                    <template v-if="contentSuggs?.suggestions?.length > 0">
+                      <button
+                        @click="suggestionsExpanded = !suggestionsExpanded"
+                        class="text-xs text-accent hover:text-accent-hover font-display font-medium"
+                      >
+                        {{ suggestionsExpanded ? 'Collapse' : 'View suggestions' }}
+                      </button>
+                    </template>
+                  </div>
+
+                  <template v-if="contentSuggs?.suggestions?.length > 0">
+                    <p class="text-xs text-secondary mb-2">
+                      {{ contentSuggs.suggestions.length }} suggestions generated
+                    </p>
+
+                    <div v-if="suggestionsExpanded" class="space-y-3 mt-3">
+                      <div
+                        v-for="(sugg, idx) in contentSuggs.suggestions"
+                        :key="idx"
+                        class="border border-border-light rounded p-3"
+                      >
+                        <p class="text-xs font-display font-medium text-primary mb-1">{{ sugg.title || sugg.page || `Suggestion ${idx + 1}` }}</p>
+                        <div v-if="sugg.before" class="mb-1">
+                          <p class="text-[10px] text-muted uppercase tracking-wider mb-0.5">Before</p>
+                          <p class="text-xs text-secondary bg-warm-50 rounded p-1.5 line-through">{{ sugg.before }}</p>
+                        </div>
+                        <div v-if="sugg.after">
+                          <p class="text-[10px] text-muted uppercase tracking-wider mb-0.5">After</p>
+                          <div class="flex items-start justify-between gap-2">
+                            <p class="text-xs text-primary bg-score-good/5 rounded p-1.5 flex-1">{{ sugg.after }}</p>
+                            <button
+                              @click="copyToClipboard(sugg.after)"
+                              class="text-[11px] text-accent hover:text-accent-hover font-display font-medium shrink-0 mt-1"
+                            >
+                              {{ copiedUrl === sugg.after ? 'Copied!' : 'Copy' }}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+
+                  <template v-else>
+                    <p class="text-xs text-secondary mb-3">
+                      Get AI-powered content improvements to boost your visibility score.
+                    </p>
+                    <button
+                      @click="handleOptimize"
+                      :disabled="optimizing || !latestCompletedScan"
+                      class="text-xs text-accent hover:text-accent-hover font-display font-medium disabled:opacity-50"
+                    >
+                      <template v-if="optimizing">
+                        <svg class="w-3 h-3 animate-spin inline mr-1" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                        Generating...
+                      </template>
+                      <template v-else>Generate suggestions</template>
+                    </button>
+                  </template>
+                </div>
+              </div>
+            </section>
+
+            <!-- 5. Agent Simulator Card (full width) -->
+            <section class="mb-8 animate-slide-up" style="animation-delay: 180ms">
+              <div class="border border-border rounded-lg p-5 bg-surface">
+                <div class="flex items-center justify-between mb-3">
+                  <p class="font-display font-semibold text-sm text-primary">Agent Simulator</p>
+                  <span class="text-[10px] font-display font-bold uppercase tracking-wider text-accent bg-accent/10 px-1.5 py-0.5 rounded">Pro</span>
+                </div>
+
+                <template v-if="simulation?.steps">
+                  <div class="flex items-center gap-3 mb-4">
+                    <p class="text-xs text-secondary">
+                      Completion rate:
+                      <span class="font-display font-bold tabular-nums" :class="scoreColorClass(simulationRate)">{{ simulationRate }}%</span>
+                    </p>
+                  </div>
+                  <StepFlow :steps="simulation.steps" />
+                </template>
+
+                <template v-else>
+                  <p class="text-xs text-secondary mb-3">
+                    Simulate how an AI agent navigates and understands your site step by step.
+                  </p>
+                  <button
+                    @click="handleSimulate"
+                    :disabled="simulating || !latestCompletedScan"
+                    class="text-xs text-accent hover:text-accent-hover font-display font-medium disabled:opacity-50"
+                  >
+                    <template v-if="simulating">
+                      <svg class="w-3 h-3 animate-spin inline mr-1" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                      Running simulation...
+                    </template>
+                    <template v-else>Run simulation</template>
+                  </button>
+                </template>
+              </div>
+            </section>
+
+          </template>
+          <!-- END PRO WIDGETS -->
+
+          <!-- 6. Recent Scans -->
+          <section class="mb-8 animate-slide-up" :style="{ animationDelay: isPro ? '240ms' : '60ms' }">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="font-display text-lg font-bold tracking-tight">Recent scans</h2>
+              <router-link to="/" class="text-[13px] text-accent hover:text-accent-hover transition-colors font-display font-medium">
+                + New scan
               </router-link>
             </div>
-          </div>
-        </section>
 
+            <div v-if="scans.length === 0" class="border border-dashed border-border rounded-lg p-10 text-center">
+              <p class="font-display font-semibold text-primary mb-1">No scans yet</p>
+              <p class="text-sm text-secondary">Run your first scan above to get started.</p>
+            </div>
+
+            <div v-else class="space-y-2">
+              <router-link
+                v-for="scan in recentScans"
+                :key="scan.scan_id"
+                :to="scan.status === 'completed' ? { name: 'Report', params: { id: scan.scan_id } } : { name: 'ScanProgress', params: { id: scan.scan_id } }"
+                class="flex items-center gap-5 px-5 py-4 border border-border rounded-lg bg-surface hover:border-warm-300 transition-colors group cursor-pointer"
+              >
+                <!-- Score circle or spinner -->
+                <div class="flex-shrink-0 w-12 h-12 flex items-center justify-center">
+                  <ScoreCircle v-if="scan.status === 'completed' && scan.score != null" :score="scan.score" :size="48" />
+                  <div v-else-if="scan.status === 'pending' || scan.status === 'running'" class="w-10 h-10 rounded-full border-2 border-accent/30 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-accent animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                  </div>
+                  <div v-else class="w-10 h-10 rounded-full border-2 border-score-bad/30 flex items-center justify-center">
+                    <span class="text-xs text-score-bad font-display font-bold">ERR</span>
+                  </div>
+                </div>
+
+                <!-- Info -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <p class="text-sm font-display font-semibold text-primary truncate group-hover:text-accent transition-colors">
+                      {{ scan.domain }}
+                    </p>
+                    <span
+                      v-if="scan.site_type"
+                      class="text-[10px] font-display font-medium uppercase tracking-wider text-warm-500 bg-warm-100 px-1.5 py-0.5 rounded"
+                    >
+                      {{ scan.site_type }}
+                    </span>
+                    <span
+                      v-if="scan.status === 'completed' && scan.score != null"
+                      class="text-xs font-display font-bold px-1.5 py-0.5 rounded"
+                      :class="{
+                        'bg-score-good/10 text-score-good': scan.score >= 70,
+                        'bg-score-medium/10 text-score-medium': scan.score >= 40 && scan.score < 70,
+                        'bg-score-bad/10 text-score-bad': scan.score < 40,
+                      }"
+                    >
+                      {{ scan.grade }}
+                    </span>
+                    <span
+                      v-else-if="scan.status === 'running' || scan.status === 'pending'"
+                      class="text-[11px] font-display text-accent bg-accent/10 px-1.5 py-0.5 rounded"
+                    >
+                      Scanning...
+                    </span>
+                  </div>
+                  <p class="text-xs text-muted mt-0.5">
+                    <span v-if="scan.created_at">{{ formatDate(scan.created_at) }}</span>
+                  </p>
+                </div>
+
+                <!-- Arrow -->
+                <svg class="w-4 h-4 text-warm-300 group-hover:text-accent transition-colors flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </router-link>
+            </div>
+          </section>
+
+          <!-- 7. UpgradeCard for free users -->
+          <section v-if="!isPro" class="mb-8 animate-slide-up" style="animation-delay: 120ms">
+            <UpgradeCard />
+          </section>
+
+        </template>
       </div>
     </div>
   </AppLayout>

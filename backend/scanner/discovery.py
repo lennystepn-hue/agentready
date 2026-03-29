@@ -7,7 +7,7 @@ import httpx
 from bs4 import BeautifulSoup
 
 USER_AGENT = "AgentCheck-Scanner/1.0 (Readiness Check)"
-TIMEOUT = 15.0
+TIMEOUT = 8.0  # Aggressive timeout for discovery — non-critical
 
 PRODUCT_URL_PATTERNS = [
     r"/product[s]?/",

@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from scanner.models import CheckResult, CheckStatus
 
 USER_AGENT = "AgentCheck-Scanner/1.0 (Readiness Check)"
-TIMEOUT = 15.0
+TIMEOUT = 10.0
 
 
 async def check_ttfb(client: httpx.AsyncClient, base_url: str) -> CheckResult:

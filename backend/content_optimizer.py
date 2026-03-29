@@ -73,55 +73,91 @@ async def optimize_content(user_id: str, scan_id: str) -> dict:
 
     focus = SITE_TYPE_FOCUS.get(site_type, SITE_TYPE_FOCUS["generic"])
 
-    prompt = f"""You are an AI content optimization expert specializing in {focus}.
+    # Extract actual check messages to give GPT real context
+    check_summaries = []
+    for check in checks[:10]:
+        check_summaries.append(f"- {check.get('name', '?')}: {check.get('status', '?')} — {check.get('message', '')[:100]}")
+    checks_text = "\n".join(check_summaries) if check_summaries else "No detailed check data available."
 
-Analyze the homepage content for {domain} (a {site_label}).
+    # Get AI insights if cached (they contain market_segment, competitors etc)
+    insights_context = ""
+    if report.get("ai_insights_json"):
+        try:
+            insights = json.loads(report["ai_insights_json"]) if isinstance(report.get("ai_insights_json"), str) else {}
+            if insights.get("market_segment"):
+                insights_context = f"\nMarket segment: {insights['market_segment']}"
+            if insights.get("competitors"):
+                insights_context += f"\nCompetitors: {', '.join(insights['competitors'][:3])}"
+        except:
+            pass
 
-Current signals detected:
-- Title: {current_title or 'Not clearly detected'}
-- Meta description: {current_meta_desc or 'Not clearly detected'}
-- H1: {current_h1 or 'Not clearly detected'}
-- Site type: {site_label}
-- Score: {report.get('total_score', 0)}/100
+    # Check for cached insights in the scan row
+    scan_insights = scan.get("ai_insights_json", "")
+    if scan_insights and not insights_context:
+        try:
+            ins = json.loads(scan_insights)
+            if ins.get("market_segment"):
+                insights_context = f"\nMarket segment: {ins['market_segment']}"
+            if ins.get("visibility_summary"):
+                insights_context += f"\nAI visibility: {ins['visibility_summary'][:200]}"
+        except:
+            pass
 
-Suggest optimized versions of these elements for better AI agent readability and discoverability.
+    prompt = f"""You are an AI visibility optimization expert. Your job is to suggest content improvements that make a website more likely to be found and recommended by AI agents (ChatGPT, Claude, Gemini, Perplexity).
+
+IMPORTANT: You must analyze the ACTUAL website at {domain}. Do NOT guess what the site does based on the domain name alone. Use the scan data below to understand what this site actually is.
+
+Website: {domain}
+Detected type: {site_label}
+AI Readiness Score: {report.get('total_score', 0)}/100
+Focus area: {focus}{insights_context}
+
+Scan check results:
+{checks_text}
+
+Current content signals:
+- Title: {current_title or 'Not detected from scan data'}
+- Meta description: {current_meta_desc or 'Not detected from scan data'}
+- H1 heading: {current_h1 or 'Not detected from scan data'}
+
+Based on the ACTUAL scan data above, suggest optimized content that will make AI agents better understand and recommend this site.
 
 Respond in this exact JSON format:
 {{
   "suggestions": [
     {{
-      "element": "title",
-      "current": "current title or best guess",
-      "suggested": "your optimized version",
-      "reason": "why this is better for AI agents"
+      "element": "Page Title",
+      "current": "the actual current title from scan data, or your best inference from the domain and scan results",
+      "suggested": "optimized title that AI agents will better parse and cite",
+      "reason": "specific reason why this improves AI discoverability"
     }},
     {{
-      "element": "meta_description",
-      "current": "current meta description or best guess",
-      "suggested": "your optimized version (max 160 chars)",
-      "reason": "why this is better for AI agents"
+      "element": "Meta Description",
+      "current": "actual or inferred meta description",
+      "suggested": "optimized meta description (max 160 chars) for AI agent consumption",
+      "reason": "specific reason"
     }},
     {{
-      "element": "h1",
-      "current": "current H1 or best guess",
-      "suggested": "your optimized version",
-      "reason": "why this is better for AI agents"
+      "element": "Main Heading (H1)",
+      "current": "actual or inferred H1",
+      "suggested": "optimized H1 for AI readability",
+      "reason": "specific reason"
     }},
     {{
-      "element": "key_paragraph",
-      "current": "inferred key paragraph topic",
-      "suggested": "a concise introductory paragraph optimized for AI consumption",
-      "reason": "why this helps AI agents understand the site"
+      "element": "Key Introductory Paragraph",
+      "current": "inferred topic/content of intro paragraph",
+      "suggested": "a clear, structured paragraph that helps AI agents quickly understand what this site offers",
+      "reason": "why this helps AI agents"
     }}
   ],
   "general_tips": [
-    "Tip 1 specific to this {site_label.lower()}",
-    "Tip 2 specific to this {site_label.lower()}",
-    "Tip 3 specific to this {site_label.lower()}"
+    "Specific actionable tip for this {site_label.lower()}",
+    "Another specific tip",
+    "Third tip"
   ]
 }}
 
-Be specific to {domain} and the {site_label.lower()} category. Make suggestions actionable and realistic."""
+CRITICAL: Your suggestions must match what {domain} ACTUALLY does based on the scan data. Do not invent a business type that doesn't match the detected site type of "{site_label}"."""
 
     try:
         async with httpx.AsyncClient(timeout=30) as client:

@@ -335,19 +335,27 @@ def check_cta_presence(html: str, schemas: list[dict]) -> CheckResult:
         "sign up", "get started", "free trial", "book a demo", "contact us",
         "request a quote", "learn more", "start now", "try free", "schedule",
         "jetzt starten", "kostenlos testen", "anfrage", "kontakt",
+        "run scan", "scan now", "try now", "start scan", "check now",
+        "subscribe", "register", "create account", "join", "download",
+        "get quote", "buy now", "order now", "add to cart", "shop now",
+        "explore", "view pricing", "see plans", "start free",
+        "scan your", "check your", "test your", "analyze",
     ]
     found = _search_html(html, cta_keywords)
 
-    # Also look for CTA-like buttons
+    # Also look for CTA-like buttons/links in HTML
     soup = BeautifulSoup(html, "lxml")
     cta_buttons = soup.find_all(
         ["button", "a"],
         string=re.compile(
-            r"(get started|sign up|free trial|book|contact|anfrage|starten|demo)", re.I
+            r"(get started|sign up|free trial|book|contact|anfrage|starten|demo|scan|check|try|start|subscribe|register|download|buy|order|pricing)", re.I
         ),
     )
 
-    total = len(found) + len(cta_buttons)
+    # Check for href patterns that indicate CTAs
+    cta_links = soup.find_all("a", href=re.compile(r"(pricing|signup|register|contact|demo|trial|login|scan)", re.I)) if soup else []
+
+    total = len(found) + len(cta_buttons) + len(cta_links)
 
     if total >= 3:
         return CheckResult(
@@ -384,7 +392,9 @@ def check_contact_form(html: str, schemas: list[dict]) -> CheckResult:
     contact_keywords = [
         "contact form", "kontaktformular", "get in touch", "send message",
         "nachricht senden", "book appointment", "termin buchen",
-        "schedule a call", "request callback",
+        "schedule a call", "request callback", "contact us", "kontakt",
+        "support", "help center", "support@", "contact@", "info@",
+        "email us", "send us", "reach out", "write us",
     ]
     found = _search_html(html, contact_keywords)
 
@@ -392,7 +402,14 @@ def check_contact_form(html: str, schemas: list[dict]) -> CheckResult:
     forms = soup.find_all("form")
     has_forms = len(forms) > 0
 
-    if found and has_forms:
+    # Also check for contact links
+    contact_links = soup.find_all("a", href=re.compile(r"(mailto:|/contact|/support|/help)", re.I)) if soup else []
+    has_contact_link = len(contact_links) > 0
+
+    # Check schemas for contactPoint
+    has_schema_contact = _search_schema(schemas, "contactPoint") or _search_schema(schemas, "email")
+
+    if (found and has_forms) or (found and has_contact_link) or (len(found) >= 3) or has_schema_contact:
         return CheckResult(
             name="Contact / Booking Form",
             category="Conversion Readiness",
@@ -401,7 +418,7 @@ def check_contact_form(html: str, schemas: list[dict]) -> CheckResult:
             max_score=5,
             message=f"Contact/booking signals found: {', '.join(found[:3])}.",
         )
-    elif found or has_forms:
+    elif found or has_forms or has_contact_link:
         return CheckResult(
             name="Contact / Booking Form",
             category="Conversion Readiness",
@@ -481,6 +498,10 @@ def check_pricing_page(html: str, schemas: list[dict]) -> CheckResult:
         "pricing", "plans", "preise", "free trial", "start free",
         "request demo", "api docs", "api documentation", "developer",
         "documentation", "free plan", "enterprise",
+        "$9", "$29", "/month", "/mo", "per month", "one-time",
+        "free tier", "pro plan", "upgrade", "subscribe",
+        "open source", "free forever", "no registration",
+        "api", "/api/", "rest api",
     ]
     found = _search_html(html, pricing_keywords)
 

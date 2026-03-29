@@ -59,11 +59,19 @@ async def check_ttfb(client: httpx.AsyncClient, base_url: str) -> CheckResult:
 
 
 def check_js_dependency(html: str) -> CheckResult:
-    """Check if content is accessible without JavaScript (body text heuristic)."""
+    """Check if content is accessible without JavaScript."""
     soup = BeautifulSoup(html, "lxml")
 
-    # Remove script and style tags
-    for tag in soup(["script", "style", "noscript"]):
+    # Count noscript content separately — it IS available to non-JS agents
+    noscript_words = 0
+    for ns in soup.find_all("noscript"):
+        noscript_words += len(ns.get_text(separator=" ", strip=True).split())
+
+    # Count structured data — also available without JS
+    json_ld_blocks = len(soup.find_all("script", type="application/ld+json"))
+
+    # Remove script and style (but keep noscript content counted above)
+    for tag in soup(["script", "style"]):
         tag.decompose()
 
     body = soup.find("body")
@@ -82,39 +90,57 @@ def check_js_dependency(html: str) -> CheckResult:
     word_count = len(text.split())
 
     # Check for SPA indicators
-    spa_indicators = [
-        'id="__next"',
-        'id="app"',
-        'id="root"',
-        "ng-app",
-        "data-reactroot",
-    ]
+    spa_indicators = ['id="__next"', 'id="app"', 'id="root"', "ng-app", "data-reactroot"]
     html_lower = html.lower()
     is_spa = any(ind.lower() in html_lower for ind in spa_indicators)
 
-    if word_count > 100:
+    # Check meta tags — title, description, og tags provide content without JS
+    meta_content = 0
+    title = soup.find("title")
+    if title and title.string and len(title.string.strip()) > 10:
+        meta_content += 1
+    meta_desc = soup.find("meta", attrs={"name": "description"})
+    if meta_desc and meta_desc.get("content", ""):
+        meta_content += 1
+    og_title = soup.find("meta", attrs={"property": "og:title"})
+    if og_title:
+        meta_content += 1
+
+    # Total accessible content score
+    total_words = word_count + noscript_words
+    has_structured = json_ld_blocks > 0
+    has_meta = meta_content >= 2
+
+    if total_words > 100 or (total_words > 50 and has_structured and has_meta):
         return CheckResult(
             name="JavaScript Dependency",
             category="Agent Accessibility",
             status=CheckStatus.PASS,
             score=5,
             max_score=5,
-            message=f"Page has {word_count} words of content accessible without JS.",
+            message=f"Page has {total_words} words accessible without JS" +
+                    (f" ({noscript_words} via noscript)" if noscript_words else "") +
+                    (f", plus {json_ld_blocks} JSON-LD block(s)" if has_structured else "") + ".",
         )
-    elif word_count > 30:
+    elif total_words > 30 or (has_structured and has_meta):
+        score = 4 if (has_structured and has_meta) else 3
         return CheckResult(
             name="JavaScript Dependency",
             category="Agent Accessibility",
             status=CheckStatus.WARN,
-            score=3,
+            score=score,
             max_score=5,
-            message=f"Page has limited content ({word_count} words) without JS.",
-            fix_suggestion="Implement server-side rendering (SSR) so AI agents can read your content.",
+            message=f"Page has {total_words} words without JS" +
+                    (f", {json_ld_blocks} JSON-LD block(s)" if has_structured else "") +
+                    (", good meta tags" if has_meta else "") + ".",
+            fix_suggestion="Consider SSR or expanding noscript content for better AI agent access.",
         )
     else:
-        msg = "Page appears to require JavaScript to render content."
+        msg = "Page has very little content without JavaScript."
         if is_spa:
             msg += " SPA framework detected."
+        if noscript_words == 0:
+            msg += " No noscript fallback."
         return CheckResult(
             name="JavaScript Dependency",
             category="Agent Accessibility",
@@ -122,7 +148,7 @@ def check_js_dependency(html: str) -> CheckResult:
             score=0,
             max_score=5,
             message=msg,
-            fix_suggestion="Use SSR or pre-rendering. AI agents typically cannot execute JavaScript.",
+            fix_suggestion="Add noscript content, use SSR, or pre-render pages. AI agents typically cannot execute JavaScript.",
         )
 
 

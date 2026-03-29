@@ -90,7 +90,7 @@ function toggleFaq(idx) {
 </script>
 
 <template>
-  <div class="flex-1 flex flex-col">
+  <div class="flex-1 flex flex-col bg-grid">
     <!-- ─── Nav ─── -->
     <AppHeader>
       <template #actions>
@@ -105,12 +105,12 @@ function toggleFaq(idx) {
       <!-- Faded platform logos in background -->
       <div class="absolute inset-0 pointer-events-none select-none" aria-hidden="true">
         <!-- Shopify bag -->
-        <svg class="absolute -right-8 top-16 w-48 h-48 text-warm-200/40 rotate-12" viewBox="0 0 256 292" fill="currentColor">
+        <svg class="absolute -right-8 top-16 w-48 h-48 text-warm-200/30 rotate-12" viewBox="0 0 256 292" fill="currentColor">
           <path d="M223.774 57.34c-.201-1.46-1.48-2.268-2.537-2.357-1.055-.088-23.383-1.743-23.383-1.743s-15.507-15.395-17.209-17.099c-1.703-1.703-5.029-1.185-6.32-.828-.19.053-3.326 1.027-8.611 2.655C157.154 14.906 141.368 0 122.104 0 121.645 0 121.172.014 120.7.04 114.16-5.7 106.15-2.2 98.689 6.886 88.248 20.448 80.189 38.48 77.737 52.06c-14.098 4.37-23.922 7.415-25.156 7.8-7.746 2.426-7.985 2.667-8.995 9.996C42.604 76.964 0 252.637 0 252.637L168.87 283.7l87.13-18.997s-32.022-205.953-32.226-207.363zM156.87 40.848l-13.789 4.273c.002-.37.007-.738.007-1.121 0-10.303-1.429-18.654-3.762-25.162 9.31 1.757 15.56 11.63 17.544 22.01zM131.998 20.838c2.659 6.384 4.37 15.494 4.37 27.873 0 .548-.005 1.063-.013 1.578l-28.471 8.817c5.478-21.105 15.741-31.706 24.114-38.268zM120.118 3.476c1.563-.003 3.065.3 4.504.898-11.424 8.376-23.632 21.488-29.565 52.162l-22.47 6.96c6.24-26.936 22.91-59.96 47.53-60.02z"/>
           <path d="M221.237 54.983c-1.055-.088-23.383-1.743-23.383-1.743s-15.507-15.395-17.209-17.099c-.637-.636-1.496-.953-2.394-1.1L168.87 283.7l87.13-18.997S223.978 56.44 223.774 57.34c-.201-.894-1.48-2.268-2.537-2.357z" opacity=".3"/>
         </svg>
         <!-- WooCommerce / WordPress W -->
-        <svg class="absolute -left-6 top-[55%] w-36 h-36 text-warm-200/30 -rotate-6" viewBox="0 0 24 24" fill="currentColor">
+        <svg class="absolute -left-6 top-[55%] w-36 h-36 text-warm-200/25 -rotate-6" viewBox="0 0 24 24" fill="currentColor">
           <path d="M2.2 5.1C1.5 5.7 1 6.8.8 8.3c-.2 1.2 0 2.7.5 4.2L4 6.3c-.6-.5-1.2-.8-1.8-1.2zm6.7 11.3l2-5.7-2-4.3c-.5 1.5-1.7 5.2-2 6.1l2 3.9zm4-11.8c-.5 0-.9.4-.9.9 0 2.4 1.1 6.2 1.1 6.2l2.5-7c-1-.2-1.8-.1-2.7-.1zm5.6 1l-2.7 7.9 1.6 3.2c1.5-2.1 2.6-4.9 2.6-7.5.1-1.4-.3-2.7-1.5-3.6z"/>
         </svg>
         <!-- Magento / M shape -->
@@ -134,9 +134,7 @@ function toggleFaq(idx) {
             <p class="text-[13px] font-display font-semibold text-accent tracking-wide uppercase mb-5">Free &amp; open source scanner</p>
 
             <h1 class="font-display text-[2.5rem] sm:text-[3.25rem] font-bold tracking-tight leading-[1.08] text-primary">
-              Make your website<br class="hidden sm:block" />
-              visible to<br class="hidden sm:block" />
-              AI&nbsp;Agents
+              Make your website visible to AI&nbsp;Agents
             </h1>
 
             <p class="mt-6 text-[17px] text-secondary leading-relaxed max-w-[52ch]">
@@ -182,28 +180,28 @@ function toggleFaq(idx) {
               <p class="text-[11px] text-warm-400 tracking-widest uppercase font-display mb-4">Make your site visible to</p>
               <div class="flex items-center gap-7 flex-wrap">
                 <!-- OpenAI / ChatGPT -->
-                <div class="flex items-center gap-2 text-warm-500">
+                <div class="flex items-center gap-2 text-warm-400">
                   <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.771.771 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.033.062L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 7.896a4.485 4.485 0 0 1 2.366-1.973V11.6a.766.766 0 0 0 .388.676l5.815 3.355-2.02 1.168a.076.076 0 0 1-.071 0l-4.83-2.786A4.504 4.504 0 0 1 2.34 7.872zm16.597 3.855l-5.833-3.387L15.119 7.2a.076.076 0 0 1 .071 0l4.83 2.791a4.494 4.494 0 0 1-.676 8.105v-5.678a.79.79 0 0 0-.407-.667zm2.01-3.023l-.141-.085-4.774-2.782a.776.776 0 0 0-.785 0L9.409 9.23V6.897a.066.066 0 0 1 .028-.061l4.83-2.787a4.5 4.5 0 0 1 6.68 4.66zm-12.64 4.135l-2.02-1.164a.08.08 0 0 1-.038-.057V6.075a4.5 4.5 0 0 1 7.375-3.453l-.142.08L8.704 5.46a.795.795 0 0 0-.393.681zm1.097-2.365l2.602-1.5 2.607 1.5v2.999l-2.597 1.5-2.607-1.5z"/>
                   </svg>
                   <span class="text-[15px] font-display font-semibold">ChatGPT</span>
                 </div>
                 <!-- Claude -->
-                <div class="flex items-center gap-2 text-warm-500">
+                <div class="flex items-center gap-2 text-warm-400">
                   <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M17.304 3.541h-3.672l6.696 16.918h3.672zm-10.608 0L0 20.459h3.744l1.38-3.588h7.068l1.38 3.588h3.744L10.608 3.541zm-.372 10.578l2.34-6.084 2.34 6.084z"/>
                   </svg>
                   <span class="text-[15px] font-display font-semibold">Claude</span>
                 </div>
                 <!-- Gemini -->
-                <div class="flex items-center gap-2 text-warm-500">
+                <div class="flex items-center gap-2 text-warm-400">
                   <svg class="w-6 h-6" viewBox="0 0 28 28" fill="currentColor">
                     <path d="M14 0c-.4 5.6-2.1 9.8-6.8 12.3C2.5 14.8 0 16 0 16s2 .6 6.6 2.6c4.7 2.5 6.4 6.7 6.8 12.3.4-5.6 2.1-9.8 6.8-12.3C24.8 16.1 28 16 28 16s-2-.6-6.6-2.6C16.7 10.9 14.4 5.6 14 0z"/>
                   </svg>
                   <span class="text-[15px] font-display font-semibold">Gemini</span>
                 </div>
                 <!-- Perplexity -->
-                <div class="flex items-center gap-2 text-warm-500">
+                <div class="flex items-center gap-2 text-warm-400">
                   <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM17 13v4h-4v-4h4zm-4 4h4v3h-7v-7h3v4z" fill-rule="evenodd"/>
                   </svg>
@@ -266,7 +264,7 @@ function toggleFaq(idx) {
     </section>
 
     <!-- ─── Stats bar + AI logos ─── -->
-    <section class="border-y border-border-light bg-warm-50">
+    <section class="border-t border-border-light bg-warm-50">
       <div class="max-w-5xl mx-auto px-6 lg:px-8 py-8">
         <!-- Stats -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-8">
@@ -291,7 +289,7 @@ function toggleFaq(idx) {
     </section>
 
     <!-- ─── AI Visibility value prop ─── -->
-    <section class="py-20 px-6 lg:px-8 bg-accent/[0.03] border-y border-accent/10">
+    <section class="py-20 px-6 lg:px-8 bg-accent/[0.05] border-y border-accent/15">
       <div class="max-w-5xl mx-auto">
         <p class="section-label mb-3">Go beyond the score</p>
         <h2 class="font-display text-2xl font-bold tracking-tight mb-3 max-w-lg">
@@ -344,21 +342,21 @@ function toggleFaq(idx) {
 
         <div class="grid sm:grid-cols-3 gap-12">
           <div>
-            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-accent text-white font-display font-bold text-sm mb-4">1</span>
+            <span class="font-display text-4xl font-bold text-warm-200 leading-none mb-4 block">1</span>
             <h3 class="font-display font-semibold text-primary mb-2">Enter your domain</h3>
             <p class="text-sm text-secondary leading-relaxed">
               Paste any website URL. We auto-detect your site type and start analyzing automatically.
             </p>
           </div>
           <div>
-            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-accent text-white font-display font-bold text-sm mb-4">2</span>
+            <span class="font-display text-4xl font-bold text-warm-200 leading-none mb-4 block">2</span>
             <h3 class="font-display font-semibold text-primary mb-2">We run 18+ checks</h3>
             <p class="text-sm text-secondary leading-relaxed">
               Our scanner evaluates protocols, structured data, accessibility, conversion readiness, and trust signals in real time.
             </p>
           </div>
           <div>
-            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-accent text-white font-display font-bold text-sm mb-4">3</span>
+            <span class="font-display text-4xl font-bold text-warm-200 leading-none mb-4 block">3</span>
             <h3 class="font-display font-semibold text-primary mb-2">Get score &amp; fixes</h3>
             <p class="text-sm text-secondary leading-relaxed">
               You receive a score out of 100, a letter grade, and prioritized fixes with code snippets for your dev team.
@@ -379,7 +377,7 @@ function toggleFaq(idx) {
           Each category measures a different dimension of how well AI agents can interact with your site.
         </p>
 
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-10">
           <div v-for="(cat, idx) in categories" :key="idx" class="group">
             <div class="flex items-baseline justify-between mb-2">
               <h3 class="font-display font-semibold text-primary">{{ cat.name }}</h3>
@@ -403,7 +401,7 @@ function toggleFaq(idx) {
     <!-- ─── Quote / context ─── -->
     <section class="py-16 px-6 lg:px-8 border-t border-border-light">
       <div class="max-w-5xl mx-auto">
-        <div class="grid sm:grid-cols-[1fr,1px,1fr] gap-10 sm:gap-12 items-start">
+        <div class="grid sm:grid-cols-2 gap-12 lg:gap-16 items-start">
           <div>
             <h2 class="font-display text-xl font-bold tracking-tight mb-3">
               Most websites aren't ready
@@ -414,8 +412,7 @@ function toggleFaq(idx) {
               data, or guide users to convert — so they recommend competitors instead.
             </p>
           </div>
-          <div class="hidden sm:block bg-border-light"></div>
-          <blockquote class="pl-0 sm:pl-2">
+          <blockquote>
             <p class="text-[17px] font-display font-medium text-primary leading-relaxed">
               "AI Agents will be responsible for
               <span class="text-accent font-bold">$20.9 billion</span>
@@ -483,13 +480,13 @@ function toggleFaq(idx) {
             v-model="domainBottom"
             type="text"
             placeholder="your-website.com"
-            class="input-field flex-1"
+            class="input-field flex-1 text-base py-3"
             :disabled="loading"
             autocomplete="url"
           />
           <button
             type="submit"
-            class="btn-primary whitespace-nowrap px-6"
+            class="btn-primary whitespace-nowrap px-8 py-3 text-base"
             :disabled="loading || !domainBottom.trim()"
           >
             Run scan

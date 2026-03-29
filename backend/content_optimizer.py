@@ -73,6 +73,12 @@ async def optimize_content(user_id: str, scan_id: str) -> dict:
 
     focus = SITE_TYPE_FOCUS.get(site_type, SITE_TYPE_FOCUS["generic"])
 
+    # Build check summaries for context
+    check_summaries = []
+    for check in checks[:8]:
+        check_summaries.append(f"- {check.get('name', '?')}: {check.get('status', '?')} — {check.get('message', '')[:80]}")
+    checks_text = "\n".join(check_summaries) if check_summaries else "No check data."
+
     # Actually fetch the homepage to get real content
     real_title = ""
     real_meta_desc = ""

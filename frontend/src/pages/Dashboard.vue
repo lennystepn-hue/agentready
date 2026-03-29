@@ -349,12 +349,12 @@ onMounted(async () => {
                 v-model="scanDomain"
                 type="text"
                 placeholder="Enter any website to scan..."
-                class="w-full rounded-xl border border-border bg-surface pl-11 pr-4 py-3.5 text-sm text-primary placeholder:text-warm-400 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all shadow-sm"
+                class="w-full rounded-lg border border-border bg-surface pl-11 pr-4 py-3.5 text-sm text-primary placeholder:text-warm-400 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
               />
             </div>
             <button
               type="submit"
-              class="btn-primary text-sm px-7 py-3.5 rounded-xl shrink-0 shadow-sm"
+              class="btn-primary text-sm px-7 py-3.5 rounded-lg shrink-0"
               :disabled="scanning || !scanDomain.trim()"
             >
               <svg v-if="scanning" class="w-4 h-4 animate-spin mr-2 inline" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
@@ -384,7 +384,7 @@ onMounted(async () => {
             <div class="grid sm:grid-cols-5 gap-5">
 
               <!-- Left: Score Hero (3 cols) -->
-              <div class="sm:col-span-3 border border-border rounded-2xl p-6 sm:p-8 bg-surface shadow-sm">
+              <div class="sm:col-span-3 border border-border rounded-xl p-6 sm:p-8 bg-surface shadow-sm">
                 <div class="flex items-center gap-6 sm:gap-8">
                   <ScoreCircle :score="bestScan.score" :grade="bestScan.grade" :size="160" />
                   <div class="flex-1 min-w-0">
@@ -415,7 +415,7 @@ onMounted(async () => {
               </div>
 
               <!-- Right: AI Mention Trend (2 cols) -->
-              <div v-if="isPro && mentions.length > 0" class="sm:col-span-2 border border-border rounded-2xl p-6 bg-surface shadow-sm flex flex-col">
+              <div v-if="isPro && mentions.length > 0" class="sm:col-span-2 border border-border rounded-xl p-6 bg-surface shadow-sm flex flex-col">
                 <div class="flex items-center justify-between mb-4">
                   <div class="flex items-center gap-2">
                     <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
@@ -445,7 +445,7 @@ onMounted(async () => {
               </div>
 
               <!-- Right fallback: no mentions or free -->
-              <div v-else class="sm:col-span-2 border border-border rounded-2xl p-6 bg-surface shadow-sm flex flex-col justify-center">
+              <div v-else class="sm:col-span-2 border border-border rounded-xl p-6 bg-surface shadow-sm flex flex-col justify-center">
                 <div class="flex items-center gap-2 mb-4">
                   <div class="w-8 h-8 rounded-lg bg-warm-100 flex items-center justify-center">
                     <svg class="w-4 h-4 text-warm-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
@@ -484,19 +484,11 @@ onMounted(async () => {
 
             <!-- ---- SECTION: Automation ---- -->
             <section class="mb-10 animate-slide-up" style="animation-delay: 60ms">
-              <div class="flex items-center gap-3 mb-5">
-                <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
-                  <svg class="w-4 h-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                </div>
-                <div>
-                  <h2 class="font-display text-base font-bold tracking-tight text-primary">Automation</h2>
-                  <p class="text-xs text-muted font-body">Hosted AI files and crawler management</p>
-                </div>
-              </div>
+              <h2 class="font-display text-sm font-bold uppercase tracking-wider text-muted mb-5">Automation</h2>
               <div class="grid sm:grid-cols-2 gap-5">
 
                 <!-- ---- Hosted Files Card ---- -->
-                <div class="border border-border rounded-2xl p-6 bg-surface shadow-sm">
+                <div class="border border-border rounded-xl p-5 bg-surface">
                   <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center gap-2.5">
                       <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
@@ -504,7 +496,6 @@ onMounted(async () => {
                       </div>
                       <p class="font-display font-semibold text-sm text-primary">Hosted Files</p>
                     </div>
-                    <span class="text-[10px] font-display font-bold uppercase tracking-wider text-accent bg-accent/10 px-2 py-0.5 rounded-md">Pro</span>
                   </div>
 
                   <template v-if="filesActive">
@@ -549,7 +540,7 @@ onMounted(async () => {
                     <button
                       @click="handleActivateFiles"
                       :disabled="activatingFiles || !primaryDomain"
-                      class="btn-primary text-sm px-5 py-2.5 rounded-xl disabled:opacity-50 shadow-sm"
+                      class="btn-primary text-sm px-5 py-2.5 rounded-lg disabled:opacity-50"
                     >
                       <svg v-if="activatingFiles" class="w-4 h-4 animate-spin inline mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
                       {{ activatingFiles ? 'Activating...' : 'Activate AI Files' }}
@@ -558,7 +549,7 @@ onMounted(async () => {
                 </div>
 
                 <!-- ---- Crawler Status Card ---- -->
-                <div class="border border-border rounded-2xl p-6 bg-surface shadow-sm">
+                <div class="border border-border rounded-xl p-5 bg-surface">
                   <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center gap-2.5">
                       <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
@@ -618,19 +609,11 @@ onMounted(async () => {
 
             <!-- ---- SECTION: Intelligence ---- -->
             <section class="mb-10 animate-slide-up" style="animation-delay: 120ms">
-              <div class="flex items-center gap-3 mb-5">
-                <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
-                  <svg class="w-4 h-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
-                </div>
-                <div>
-                  <h2 class="font-display text-base font-bold tracking-tight text-primary">Intelligence</h2>
-                  <p class="text-xs text-muted font-body">Competitor tracking and content optimization</p>
-                </div>
-              </div>
+              <h2 class="font-display text-sm font-bold uppercase tracking-wider text-muted mb-5">Intelligence</h2>
               <div class="grid sm:grid-cols-2 gap-5">
 
                 <!-- ---- Competitor Tracking Card ---- -->
-                <div class="border border-border rounded-2xl p-6 bg-surface shadow-sm">
+                <div class="border border-border rounded-xl p-5 bg-surface">
                   <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center gap-2.5">
                       <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
@@ -691,7 +674,7 @@ onMounted(async () => {
                     <button
                       @click="handleDiscoverCompetitors"
                       :disabled="discoveringComps || !primaryDomain"
-                      class="btn-primary text-sm px-5 py-2.5 rounded-xl disabled:opacity-50 shadow-sm"
+                      class="btn-primary text-sm px-5 py-2.5 rounded-lg disabled:opacity-50"
                     >
                       <svg v-if="discoveringComps" class="w-4 h-4 animate-spin inline mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
                       {{ discoveringComps ? 'Discovering...' : 'Discover competitors' }}
@@ -700,7 +683,7 @@ onMounted(async () => {
                 </div>
 
                 <!-- ---- Content Suggestions Card ---- -->
-                <div class="border border-border rounded-2xl p-6 bg-surface shadow-sm">
+                <div class="border border-border rounded-xl p-5 bg-surface">
                   <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center gap-2.5">
                       <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
@@ -726,11 +709,11 @@ onMounted(async () => {
                       {{ suggestionsExpanded ? 'Collapse' : 'View suggestions' }}
                     </button>
 
-                    <div v-if="suggestionsExpanded" class="space-y-3 mt-4">
+                    <div v-if="suggestionsExpanded" class="divide-y divide-border-light mt-4">
                       <div
                         v-for="(sugg, idx) in contentSuggs.suggestions"
                         :key="idx"
-                        class="rounded-xl border border-border-light p-4 bg-warm-50/50"
+                        class="py-4 first:pt-0 last:pb-0"
                       >
                         <div class="flex items-start justify-between gap-2 mb-2">
                           <p class="text-sm font-display font-semibold text-primary">{{ sugg.element || sugg.title || `Suggestion ${idx + 1}` }}</p>
@@ -767,7 +750,7 @@ onMounted(async () => {
                     <button
                       @click="handleOptimize"
                       :disabled="optimizing || !latestCompletedScan"
-                      class="btn-primary text-sm px-5 py-2.5 rounded-xl disabled:opacity-50 shadow-sm"
+                      class="btn-primary text-sm px-5 py-2.5 rounded-lg disabled:opacity-50"
                     >
                       <svg v-if="optimizing" class="w-4 h-4 animate-spin inline mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
                       {{ optimizing ? 'Generating...' : 'Generate suggestions' }}
@@ -779,18 +762,10 @@ onMounted(async () => {
 
             <!-- ---- SECTION: Activity ---- -->
             <section class="mb-10 animate-slide-up" style="animation-delay: 180ms">
-              <div class="flex items-center gap-3 mb-5">
-                <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
-                  <svg class="w-4 h-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                </div>
-                <div>
-                  <h2 class="font-display text-base font-bold tracking-tight text-primary">Activity</h2>
-                  <p class="text-xs text-muted font-body">Agent simulation and scan history</p>
-                </div>
-              </div>
+              <h2 class="font-display text-sm font-bold uppercase tracking-wider text-muted mb-5">Activity</h2>
 
               <!-- ---- Agent Simulator Card (full width) ---- -->
-              <div class="border border-border rounded-2xl p-6 bg-surface shadow-sm">
+              <div class="border border-border rounded-xl p-5 bg-surface">
                 <div class="flex items-center justify-between mb-5">
                   <div class="flex items-center gap-2.5">
                     <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
@@ -798,7 +773,6 @@ onMounted(async () => {
                     </div>
                     <p class="font-display font-semibold text-sm text-primary">Agent Simulator</p>
                   </div>
-                  <span class="text-[10px] font-display font-bold uppercase tracking-wider text-accent bg-accent/10 px-2 py-0.5 rounded-md">Pro</span>
                 </div>
 
                 <template v-if="simulation?.steps">
@@ -835,17 +809,19 @@ onMounted(async () => {
                 </template>
 
                 <template v-else>
-                  <p class="text-sm text-secondary font-body mb-4 leading-relaxed">
-                    Simulate how an AI agent navigates and understands your site step by step. See exactly where agents get stuck.
-                  </p>
-                  <button
-                    @click="handleSimulate"
-                    :disabled="simulating || !latestCompletedScan"
-                    class="btn-primary text-sm px-5 py-2.5 rounded-xl disabled:opacity-50 shadow-sm"
-                  >
-                    <svg v-if="simulating" class="w-4 h-4 animate-spin inline mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-                    {{ simulating ? 'Running simulation...' : 'Run simulation' }}
-                  </button>
+                  <div class="flex items-center gap-4">
+                    <p class="text-sm text-secondary font-body leading-relaxed flex-1">
+                      Simulate how an AI agent navigates and understands your site step by step.
+                    </p>
+                    <button
+                      @click="handleSimulate"
+                      :disabled="simulating || !latestCompletedScan"
+                      class="btn-primary text-sm px-5 py-2.5 rounded-lg disabled:opacity-50 shrink-0"
+                    >
+                      <svg v-if="simulating" class="w-4 h-4 animate-spin inline mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                      {{ simulating ? 'Running...' : 'Run simulation' }}
+                    </button>
+                  </div>
                 </template>
               </div>
             </section>
@@ -886,12 +862,7 @@ onMounted(async () => {
           <!-- ============================================================ -->
           <section class="mb-10 animate-slide-up" :style="{ animationDelay: isPro ? '240ms' : '120ms' }">
             <div class="flex items-center justify-between mb-5">
-              <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-lg bg-warm-100 flex items-center justify-center">
-                  <svg class="w-4 h-4 text-warm-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                </div>
-                <h2 class="font-display text-base font-bold tracking-tight text-primary">Recent Scans</h2>
-              </div>
+              <h2 class="font-display text-sm font-bold uppercase tracking-wider text-muted">Recent Scans</h2>
               <router-link to="/" class="inline-flex items-center gap-1.5 text-xs text-accent hover:text-accent-hover transition-colors font-display font-semibold px-3 py-1.5 rounded-lg bg-accent/5 hover:bg-accent/10">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
                 New scan
@@ -906,12 +877,12 @@ onMounted(async () => {
               <p class="text-sm text-secondary font-body">Run your first scan above to get started.</p>
             </div>
 
-            <div v-else class="border border-border rounded-2xl bg-surface shadow-sm overflow-hidden divide-y divide-border-light">
+            <div v-else class="border border-border rounded-xl bg-surface overflow-hidden divide-y divide-border-light">
               <router-link
                 v-for="scan in recentScans"
                 :key="scan.scan_id"
                 :to="scan.status === 'completed' ? { name: 'Report', params: { id: scan.scan_id } } : { name: 'ScanProgress', params: { id: scan.scan_id } }"
-                class="flex items-center gap-4 sm:gap-5 px-5 sm:px-6 py-4 hover:bg-warm-50/60 transition-colors group cursor-pointer"
+                class="relative flex items-center gap-4 px-5 py-4 hover:bg-warm-50 transition-colors group cursor-pointer"
               >
                 <!-- Score circle or spinner -->
                 <div class="flex-shrink-0 w-12 h-12 flex items-center justify-center">
@@ -965,22 +936,22 @@ onMounted(async () => {
                     Scanning...
                   </span>
 
-                  <!-- Delete button -->
-                  <button
-                    @click.prevent.stop="handleDeleteScan(scan.scan_id)"
-                    class="w-7 h-7 rounded-lg flex items-center justify-center text-warm-300 hover:text-score-bad hover:bg-score-bad/10 transition-colors opacity-0 group-hover:opacity-100"
-                    title="Delete scan"
-                  >
-                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-
                   <!-- Arrow -->
                   <svg class="w-4 h-4 text-warm-300 group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                   </svg>
                 </div>
+
+                <!-- Delete button -->
+                <button
+                  @click.prevent.stop="handleDeleteScan(scan.scan_id)"
+                  class="absolute right-2 top-2 w-6 h-6 rounded-md flex items-center justify-center text-warm-300 hover:text-score-bad hover:bg-score-bad/10 transition-colors opacity-0 group-hover:opacity-100"
+                  title="Delete scan"
+                >
+                  <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
               </router-link>
             </div>
           </section>

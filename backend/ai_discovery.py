@@ -18,14 +18,14 @@ class DiscoveryResult:
     context: str  # snippet where domain was mentioned, or why not found
     confidence: float  # 0-1
 
-async def run_discovery_test(domain: str, product_hints: list[str] = None) -> dict:
+async def run_discovery_test(domain: str, product_hints: list[str] = None, site_type: str = "generic") -> dict:
     """
     Run AI discovery test for a domain.
     Sends shopping-related queries to AI APIs and checks if the domain appears.
     Returns discovery score and individual query results.
     """
     # Generate test queries based on domain and product hints
-    queries = generate_test_queries(domain, product_hints)
+    queries = generate_test_queries(domain, product_hints, site_type)
 
     results = []
     for query in queries:
@@ -54,24 +54,73 @@ async def run_discovery_test(domain: str, product_hints: list[str] = None) -> di
         "summary": generate_summary(domain, discovery_score, found_count, total),
     }
 
-def generate_test_queries(domain: str, product_hints: list[str] = None) -> list[str]:
-    """Generate relevant shopping queries to test."""
-    # Extract likely store type from domain
+SITE_TYPE_QUERIES = {
+    "ecommerce": [
+        "What online shops sell products similar to {domain}?",
+        "Can you recommend {domain} for shopping?",
+        "Is {domain} a reliable online store?",
+        "Best alternatives to {domain} for online shopping",
+    ],
+    "blog": [
+        "What does {domain} write about?",
+        "Is {domain} a good source for news and articles?",
+        "Recommend blogs similar to {domain}",
+        "What topics does {base} cover?",
+    ],
+    "saas": [
+        "What does {domain} do? Is it a good tool?",
+        "Tell me about the software at {domain}",
+        "Best alternatives to {domain}",
+        "Is {domain} worth using?",
+    ],
+    "restaurant": [
+        "Tell me about the restaurant {domain}",
+        "Is {domain} a good place to eat?",
+        "What cuisine does {base} serve?",
+        "Recommend restaurants similar to {domain}",
+    ],
+    "local_business": [
+        "What services does {domain} offer?",
+        "Is {domain} a reliable local business?",
+        "Tell me about {base} and what they do",
+        "Best alternatives to {domain} in the area",
+    ],
+    "professional_service": [
+        "What services does {domain} provide?",
+        "Is {domain} reputable in their field?",
+        "Tell me about {base} professional services",
+        "Recommend firms similar to {domain}",
+    ],
+    "portfolio": [
+        "What does the agency {domain} do?",
+        "Tell me about {base} and their work",
+        "Is {domain} a good agency to work with?",
+        "Recommend agencies similar to {domain}",
+    ],
+    "generic": [
+        "What is {domain}?",
+        "Tell me about {domain}",
+        "Is {domain} a useful website?",
+        "What can I find at {domain}?",
+    ],
+}
+
+
+def generate_test_queries(domain: str, product_hints: list[str] = None, site_type: str = "generic") -> list[str]:
+    """Generate relevant queries based on site type."""
     base = domain.replace("www.", "").split(".")[0]
 
-    queries = [
-        f"What online shops sell products similar to {domain}?",
-        f"Can you recommend {domain} for shopping?",
-        f"Is {domain} a reliable online store?",
-        f"Find me products from {base} online shop",
-        f"Best alternatives to {domain} for online shopping",
-    ]
+    templates = SITE_TYPE_QUERIES.get(site_type, SITE_TYPE_QUERIES["generic"])
+    queries = [q.format(domain=domain, base=base) for q in templates]
+
+    # Always add a general query
+    queries.append(f"What do you know about {domain}?")
 
     if product_hints:
-        for hint in product_hints[:3]:
-            queries.append(f"Where can I buy {hint} online?")
+        for hint in product_hints[:2]:
+            queries.append(f"Where can I find {hint}?")
 
-    return queries[:6]  # Max 6 queries per test
+    return queries[:6]
 
 async def test_single_query(domain: str, query: str) -> DiscoveryResult:
     """Test a single query against available AI providers."""

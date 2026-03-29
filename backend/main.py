@@ -733,16 +733,17 @@ async def run_ai_discovery(scan_id: str, user: dict = Depends(get_current_user))
     if scan["status"] != "completed":
         raise HTTPException(status_code=400, detail="Scan must be completed first.")
 
-    # Extract product hints from scan results if available
+    # Extract site type and hints from scan results
     product_hints = []
+    site_type = "generic"
     if scan.get("report_json"):
         try:
             report = json.loads(scan["report_json"])
-            # Try to get product-related info from checks
+            site_type = report.get("site_type", "generic")
         except:
             pass
 
-    result = await run_discovery_test(scan["domain"], product_hints)
+    result = await run_discovery_test(scan["domain"], product_hints, site_type)
     return result
 
 

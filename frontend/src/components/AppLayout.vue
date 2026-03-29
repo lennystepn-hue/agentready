@@ -151,14 +151,14 @@ function isActive(to) {
       </aside>
 
       <!-- Main content area -->
-      <main class="flex-1 flex flex-col min-w-0">
+      <main class="flex-1 flex flex-col min-w-0 pb-16 sm:pb-0">
         <slot />
       </main>
     </div>
 
     <!-- Mobile bottom nav -->
     <div class="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-page/95 backdrop-blur-sm border-t border-border-light">
-      <nav class="flex items-center justify-around h-14 px-2">
+      <nav class="flex items-center justify-around h-16 px-2">
         <router-link
           to="/dashboard"
           class="flex flex-col items-center gap-0.5 py-1 px-2 rounded-md transition-colors"

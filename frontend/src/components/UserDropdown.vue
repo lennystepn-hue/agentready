@@ -89,7 +89,7 @@ const initial = () => {
       <div
         v-if="open"
         ref="dropdownRef"
-        class="absolute right-0 mt-2 w-64 bg-surface border border-border-light rounded-lg shadow-lg z-50 overflow-hidden"
+        class="absolute right-0 mt-2 w-64 max-w-[calc(100vw-2rem)] bg-surface border border-border-light rounded-lg shadow-lg z-[999] overflow-hidden"
       >
         <!-- User info -->
         <div class="px-4 py-3 border-b border-border-light">

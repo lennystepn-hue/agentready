@@ -328,7 +328,7 @@ onMounted(fetchReport)
               <div v-if="insights.competitors?.length">
                 <div class="flex items-center justify-between mb-2">
                   <p class="section-label">Detected competitors</p>
-                  <button @click="scanCompetitors" class="text-xs text-accent hover:text-accent-hover font-display font-medium">
+                  <button @click="scanCompetitors" class="text-xs text-accent hover:text-accent-hover font-display font-medium min-h-[44px] flex items-center">
                     Compare all →
                   </button>
                 </div>
@@ -492,12 +492,12 @@ onMounted(fetchReport)
                       </span>
                     </div>
                     <div class="min-w-0 flex-1">
-                      <p class="text-sm font-display font-medium text-primary">"{{ r.query }}"</p>
+                      <p class="text-sm font-display font-medium text-primary break-words">"{{ r.query }}"</p>
                       <div class="flex items-center gap-2 mt-1">
                         <span class="text-[11px] font-display uppercase tracking-wider px-1.5 py-0.5 rounded bg-warm-100 text-muted">{{ r.provider }}</span>
                         <span class="text-xs" :class="r.found ? 'text-score-good' : 'text-score-bad'">{{ r.found ? 'Found' : 'Not found' }}</span>
                       </div>
-                      <p class="text-xs text-muted mt-1.5 leading-relaxed">{{ r.context }}</p>
+                      <p class="text-xs text-muted mt-1.5 leading-relaxed break-words" style="overflow-wrap: anywhere">{{ r.context }}</p>
                     </div>
                   </div>
                 </div>
@@ -532,7 +532,7 @@ onMounted(fetchReport)
               <h3 class="font-display font-semibold text-primary">Get tailored fix files for {{ scan.domain }}</h3>
               <p class="text-sm text-secondary mt-1 leading-relaxed">Download ready-to-deploy ai.txt, llms.txt, Schema markup, and more — customized for your scan results.</p>
             </div>
-            <div class="flex flex-col items-end gap-1 flex-shrink-0">
+            <div class="flex flex-col items-stretch sm:items-end gap-1 flex-shrink-0 w-full sm:w-auto">
               <!-- Has access: download button -->
               <template v-if="isLoggedIn && hasFixAccess">
                 <button

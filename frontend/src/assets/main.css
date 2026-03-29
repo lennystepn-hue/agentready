@@ -41,6 +41,18 @@
     background: theme('colors.warm.400');
   }
 
+  /* Prevent horizontal overflow */
+  html, body {
+    overflow-x: hidden;
+  }
+
+  /* Better touch targets globally */
+  @media (pointer: coarse) {
+    button, a, [role="button"] {
+      min-height: 44px;
+    }
+  }
+
   /* Readable body text */
   .prose-body {
     max-width: 65ch;
@@ -89,6 +101,10 @@
 }
 
 @layer utilities {
+  .overflow-wrap-anywhere {
+    overflow-wrap: anywhere;
+  }
+
   .animate-score-fill {
     animation: scoreFill 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
   }

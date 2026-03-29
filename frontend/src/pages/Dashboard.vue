@@ -345,7 +345,7 @@ onMounted(async () => {
 
 <template>
   <AppLayout>
-    <div class="flex-1 pb-16 sm:pb-0 bg-page">
+    <div class="flex-1 bg-page">
       <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
 
         <!-- ============================================================ -->
@@ -399,9 +399,10 @@ onMounted(async () => {
             <div class="grid sm:grid-cols-5 gap-5">
 
               <!-- Left: Score Hero (3 cols) -->
-              <div class="sm:col-span-3 border border-border rounded-xl p-6 sm:p-8 bg-surface shadow-sm">
-                <div class="flex items-center gap-6 sm:gap-8">
-                  <ScoreCircle :score="bestScan.score" :grade="bestScan.grade" :size="160" />
+              <div class="sm:col-span-3 border border-border rounded-xl p-4 sm:p-8 bg-surface shadow-sm">
+                <div class="flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-8">
+                  <ScoreCircle :score="bestScan.score" :grade="bestScan.grade" :size="100" class="sm:hidden" />
+                  <ScoreCircle :score="bestScan.score" :grade="bestScan.grade" :size="160" class="hidden sm:block" />
                   <div class="flex-1 min-w-0">
                     <p class="font-display font-semibold text-xs uppercase tracking-wider text-muted mb-2">AI Visibility Score</p>
                     <p class="font-display text-4xl sm:text-5xl font-bold tabular-nums leading-none" :class="scoreColorClass(bestScan.score)">
@@ -475,7 +476,7 @@ onMounted(async () => {
                   <button
                     @click="handleTrackMentions"
                     :disabled="trackingMentions || !primaryDomain"
-                    class="inline-flex items-center gap-1.5 text-xs font-display font-semibold text-accent hover:text-accent-hover transition-colors disabled:opacity-50"
+                    class="inline-flex items-center gap-1.5 text-xs font-display font-semibold text-accent hover:text-accent-hover transition-colors disabled:opacity-50 min-h-[44px]"
                   >
                     <svg v-if="trackingMentions" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
                     <svg v-else class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
@@ -483,7 +484,7 @@ onMounted(async () => {
                   </button>
                 </div>
                 <div v-if="!isPro" class="mt-4">
-                  <router-link to="/pricing" class="inline-flex items-center gap-1.5 text-xs font-display font-semibold text-accent hover:text-accent-hover transition-colors">
+                  <router-link to="/pricing" class="inline-flex items-center gap-1.5 text-xs font-display font-semibold text-accent hover:text-accent-hover transition-colors min-h-[44px]">
                     Learn more
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
                   </router-link>
@@ -514,7 +515,7 @@ onMounted(async () => {
               <div class="grid sm:grid-cols-2 gap-5">
 
                 <!-- ---- Hosted Files Card ---- -->
-                <div class="border border-border rounded-xl p-5 bg-surface">
+                <div class="border border-border rounded-xl p-4 sm:p-5 bg-surface">
                   <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center gap-2.5">
                       <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
@@ -529,18 +530,20 @@ onMounted(async () => {
                       <div
                         v-for="file in hostedFiles"
                         :key="file.id || file.file_type"
-                        class="flex items-center gap-3 p-3 rounded-xl bg-warm-50 border border-border-light"
+                        class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 p-3 rounded-xl bg-warm-50 border border-border-light"
                       >
-                        <div class="w-7 h-7 rounded-lg bg-score-good/10 flex items-center justify-center shrink-0">
-                          <svg class="w-3.5 h-3.5 text-score-good" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
-                        </div>
-                        <div class="min-w-0 flex-1">
-                          <p class="text-xs font-display font-semibold text-primary">{{ file.file_type }}</p>
-                          <p class="text-[11px] text-muted truncate font-body">{{ hostedUrl(file) }}</p>
+                        <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto sm:flex-1 min-w-0">
+                          <div class="w-7 h-7 rounded-lg bg-score-good/10 flex items-center justify-center shrink-0">
+                            <svg class="w-3.5 h-3.5 text-score-good" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                          </div>
+                          <div class="min-w-0 flex-1">
+                            <p class="text-xs font-display font-semibold text-primary">{{ file.file_type }}</p>
+                            <p class="text-[11px] text-muted truncate font-body">{{ hostedUrl(file) }}</p>
+                          </div>
                         </div>
                         <button
                           @click.prevent="copyToClipboard(hostedUrl(file))"
-                          class="shrink-0 inline-flex items-center gap-1 text-xs font-display font-medium px-2.5 py-1.5 rounded-lg transition-all"
+                          class="w-full sm:w-auto shrink-0 inline-flex items-center justify-center gap-1 text-xs font-display font-medium px-2.5 py-1.5 rounded-lg transition-all min-h-[44px] sm:min-h-0"
                           :class="copiedUrl === hostedUrl(file) ? 'bg-score-good/10 text-score-good' : 'bg-warm-100 text-secondary hover:bg-accent/10 hover:text-accent'"
                         >
                           <svg v-if="copiedUrl === hostedUrl(file)" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
@@ -566,7 +569,7 @@ onMounted(async () => {
                     <button
                       @click="handleActivateFiles"
                       :disabled="activatingFiles || !primaryDomain"
-                      class="btn-primary text-sm px-5 py-2.5 rounded-lg disabled:opacity-50"
+                      class="btn-primary text-sm px-5 py-2.5 rounded-lg disabled:opacity-50 min-h-[44px]"
                     >
                       <svg v-if="activatingFiles" class="w-4 h-4 animate-spin inline mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
                       {{ activatingFiles ? 'Activating...' : 'Activate AI Files' }}
@@ -575,7 +578,7 @@ onMounted(async () => {
                 </div>
 
                 <!-- ---- Crawler Status Card ---- -->
-                <div class="border border-border rounded-xl p-5 bg-surface">
+                <div class="border border-border rounded-xl p-4 sm:p-5 bg-surface">
                   <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center gap-2.5">
                       <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
@@ -639,7 +642,7 @@ onMounted(async () => {
               <div class="grid sm:grid-cols-2 gap-5">
 
                 <!-- ---- Competitor Tracking Card ---- -->
-                <div class="border border-border rounded-xl p-5 bg-surface">
+                <div class="border border-border rounded-xl p-4 sm:p-5 bg-surface">
                   <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center gap-2.5">
                       <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
@@ -678,7 +681,7 @@ onMounted(async () => {
                       >
                         <div class="flex items-center gap-2.5">
                           <span class="w-6 h-6 rounded-md bg-warm-100 flex items-center justify-center text-[10px] font-display font-bold text-warm-500">{{ idx + 1 }}</span>
-                          <span class="text-xs font-display font-medium text-primary truncate">{{ comp.competitor_domain || comp.domain }}</span>
+                          <span class="text-xs font-display font-medium text-primary truncate sm:truncate break-all sm:break-normal">{{ comp.competitor_domain || comp.domain }}</span>
                         </div>
                         <span
                           class="text-sm font-display font-bold tabular-nums"
@@ -700,7 +703,7 @@ onMounted(async () => {
                     <button
                       @click="handleDiscoverCompetitors"
                       :disabled="discoveringComps || !primaryDomain"
-                      class="btn-primary text-sm px-5 py-2.5 rounded-lg disabled:opacity-50"
+                      class="btn-primary text-sm px-5 py-2.5 rounded-lg disabled:opacity-50 min-h-[44px]"
                     >
                       <svg v-if="discoveringComps" class="w-4 h-4 animate-spin inline mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
                       {{ discoveringComps ? 'Discovering...' : 'Discover competitors' }}
@@ -709,7 +712,7 @@ onMounted(async () => {
                 </div>
 
                 <!-- ---- Content Suggestions Card ---- -->
-                <div class="border border-border rounded-xl p-5 bg-surface">
+                <div class="border border-border rounded-xl p-4 sm:p-5 bg-surface">
                   <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center gap-2.5">
                       <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
@@ -729,7 +732,7 @@ onMounted(async () => {
 
                     <button
                       @click="suggestionsExpanded = !suggestionsExpanded"
-                      class="inline-flex items-center gap-1.5 text-xs font-display font-semibold text-accent hover:text-accent-hover transition-colors mb-1"
+                      class="inline-flex items-center gap-1.5 text-xs font-display font-semibold text-accent hover:text-accent-hover transition-colors mb-1 min-h-[44px]"
                     >
                       <svg class="w-3.5 h-3.5 transition-transform" :class="suggestionsExpanded ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
                       {{ suggestionsExpanded ? 'Collapse' : 'View suggestions' }}
@@ -749,12 +752,12 @@ onMounted(async () => {
 
                         <div v-if="sugg.current" class="mb-2.5">
                           <p class="text-[10px] text-muted uppercase tracking-wider font-display font-semibold mb-1">Current</p>
-                          <p class="text-xs text-secondary font-body bg-score-bad/5 border border-score-bad/10 rounded-lg p-2.5 leading-relaxed">{{ sugg.current }}</p>
+                          <p class="text-xs text-secondary font-body bg-score-bad/5 border border-score-bad/10 rounded-lg p-2.5 leading-relaxed break-words overflow-wrap-anywhere">{{ sugg.current }}</p>
                         </div>
                         <div v-if="sugg.suggested">
                           <p class="text-[10px] text-muted uppercase tracking-wider font-display font-semibold mb-1">Suggested</p>
                           <div class="flex items-start gap-2">
-                            <p class="text-xs text-primary font-body bg-score-good/5 border border-score-good/10 rounded-lg p-2.5 flex-1 leading-relaxed">{{ sugg.suggested }}</p>
+                            <p class="text-xs text-primary font-body bg-score-good/5 border border-score-good/10 rounded-lg p-2.5 flex-1 leading-relaxed break-words overflow-wrap-anywhere">{{ sugg.suggested }}</p>
                             <button
                               @click="copyToClipboard(sugg.suggested)"
                               class="shrink-0 mt-1 inline-flex items-center gap-1 text-[11px] font-display font-medium px-2 py-1 rounded-lg transition-all"
@@ -776,7 +779,7 @@ onMounted(async () => {
                     <button
                       @click="handleOptimize"
                       :disabled="optimizing || !latestCompletedScan"
-                      class="btn-primary text-sm px-5 py-2.5 rounded-lg disabled:opacity-50"
+                      class="btn-primary text-sm px-5 py-2.5 rounded-lg disabled:opacity-50 min-h-[44px]"
                     >
                       <svg v-if="optimizing" class="w-4 h-4 animate-spin inline mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
                       {{ optimizing ? 'Generating...' : 'Generate suggestions' }}
@@ -791,7 +794,7 @@ onMounted(async () => {
               <h2 class="font-display text-sm font-bold uppercase tracking-wider text-muted mb-5">Activity</h2>
 
               <!-- ---- Agent Simulator Card (full width) ---- -->
-              <div class="border border-border rounded-xl p-5 bg-surface">
+              <div class="border border-border rounded-xl p-4 sm:p-5 bg-surface">
                 <div class="flex items-center justify-between mb-5">
                   <div class="flex items-center gap-2.5">
                     <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
@@ -863,10 +866,10 @@ onMounted(async () => {
               <div class="relative rounded-2xl border border-border overflow-hidden">
                 <!-- Blurred preview content -->
                 <div class="grid sm:grid-cols-2 gap-5 p-6 opacity-40 blur-[2px] pointer-events-none select-none" aria-hidden="true">
-                  <div class="border border-border rounded-xl p-5 bg-surface h-44"></div>
-                  <div class="border border-border rounded-xl p-5 bg-surface h-44"></div>
-                  <div class="border border-border rounded-xl p-5 bg-surface h-44"></div>
-                  <div class="border border-border rounded-xl p-5 bg-surface h-44"></div>
+                  <div class="border border-border rounded-xl p-4 sm:p-5 bg-surface h-44"></div>
+                  <div class="border border-border rounded-xl p-4 sm:p-5 bg-surface h-44"></div>
+                  <div class="border border-border rounded-xl p-4 sm:p-5 bg-surface h-44"></div>
+                  <div class="border border-border rounded-xl p-4 sm:p-5 bg-surface h-44"></div>
                 </div>
                 <!-- Overlay CTA -->
                 <div class="absolute inset-0 flex flex-col items-center justify-center bg-surface/60 backdrop-blur-sm">

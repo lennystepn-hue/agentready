@@ -178,7 +178,7 @@ function toggleFaq(idx) {
             <!-- AI Platform Logos — in hero -->
             <div class="mt-10 pt-8 border-t border-border-light">
               <p class="text-[11px] text-warm-400 tracking-widest uppercase font-display mb-4">Make your site visible to</p>
-              <div class="flex items-center gap-7 flex-wrap">
+              <div class="flex items-center gap-4 sm:gap-7 flex-wrap">
                 <!-- OpenAI / ChatGPT -->
                 <div class="flex items-center gap-2 text-warm-400">
                   <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
@@ -388,7 +388,7 @@ function toggleFaq(idx) {
               <span
                 v-for="check in cat.checks"
                 :key="check"
-                class="inline-block text-[11px] font-display text-muted bg-warm-100 rounded px-2 py-0.5"
+                class="inline-block text-[10px] sm:text-[11px] font-display text-muted bg-warm-100 rounded px-1.5 sm:px-2 py-0.5"
               >
                 {{ check }}
               </span>

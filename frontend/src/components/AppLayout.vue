@@ -62,7 +62,7 @@ function isActive(to) {
 <template>
   <div class="flex-1 flex flex-col min-h-screen">
     <!-- App Header -->
-    <AppHeader />
+    <AppHeader full-width />
 
     <div class="flex flex-1">
       <!-- Sidebar (hidden on mobile) -->

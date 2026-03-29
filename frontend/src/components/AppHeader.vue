@@ -5,12 +5,13 @@ import UserDropdown from './UserDropdown.vue'
 defineProps({
   showBack: { type: String, default: '' },
   backLabel: { type: String, default: 'Back' },
+  fullWidth: { type: Boolean, default: false },
 })
 </script>
 
 <template>
   <header class="sticky top-0 z-50 bg-page/95 backdrop-blur-sm border-b border-border-light">
-    <div class="h-14 max-w-5xl mx-auto px-6 lg:px-8 flex items-center justify-between">
+    <div class="h-14 flex items-center justify-between" :class="fullWidth ? 'px-5' : 'max-w-5xl mx-auto px-6 lg:px-8'">
       <!-- Left: Logo + back -->
       <div class="flex items-center gap-3">
         <router-link to="/" class="flex items-center gap-2 flex-shrink-0">

@@ -15,9 +15,9 @@ from db import update_scan_result
 
 import asyncio
 
-USER_AGENT = "AgentCheck-Scanner/1.0 (Readiness Check)"
-TIMEOUT = 15.0
-SCAN_TOTAL_TIMEOUT = 90  # Max total scan time in seconds
+USER_AGENT = "Mozilla/5.0 (compatible; AgentCheck/1.0; +https://agentcheck.site/about)"
+TIMEOUT = 12.0
+SCAN_TOTAL_TIMEOUT = 60  # Max total scan time in seconds
 
 logger = logging.getLogger(__name__)
 

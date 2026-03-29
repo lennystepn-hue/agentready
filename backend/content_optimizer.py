@@ -73,33 +73,48 @@ async def optimize_content(user_id: str, scan_id: str) -> dict:
 
     focus = SITE_TYPE_FOCUS.get(site_type, SITE_TYPE_FOCUS["generic"])
 
-    # Extract actual check messages to give GPT real context
-    check_summaries = []
-    for check in checks[:10]:
-        check_summaries.append(f"- {check.get('name', '?')}: {check.get('status', '?')} — {check.get('message', '')[:100]}")
-    checks_text = "\n".join(check_summaries) if check_summaries else "No detailed check data available."
+    # Actually fetch the homepage to get real content
+    real_title = ""
+    real_meta_desc = ""
+    real_h1 = ""
+    real_intro = ""
+    try:
+        from bs4 import BeautifulSoup
+        async with httpx.AsyncClient(timeout=12, follow_redirects=True,
+            headers={"User-Agent": "Mozilla/5.0 (compatible; AgentCheck/1.0)"}) as http_client:
+            resp = await http_client.get(f"https://{domain}")
+            if resp.status_code == 200:
+                soup = BeautifulSoup(resp.text, "lxml")
+                title_tag = soup.find("title")
+                if title_tag and title_tag.string:
+                    real_title = title_tag.string.strip()[:200]
+                meta_desc_tag = soup.find("meta", attrs={"name": "description"})
+                if meta_desc_tag:
+                    real_meta_desc = (meta_desc_tag.get("content", "") or "")[:300]
+                h1_tag = soup.find("h1")
+                if h1_tag:
+                    real_h1 = h1_tag.get_text(strip=True)[:200]
+                # Get first meaningful paragraph
+                for p in soup.find_all("p"):
+                    text = p.get_text(strip=True)
+                    if len(text) > 50:
+                        real_intro = text[:300]
+                        break
+    except Exception as e:
+        logger.warning(f"Could not fetch {domain} for content optimization: {e}")
 
-    # Get AI insights if cached (they contain market_segment, competitors etc)
+    # Get AI insights if cached
     insights_context = ""
-    if report.get("ai_insights_json"):
-        try:
-            insights = json.loads(report["ai_insights_json"]) if isinstance(report.get("ai_insights_json"), str) else {}
-            if insights.get("market_segment"):
-                insights_context = f"\nMarket segment: {insights['market_segment']}"
-            if insights.get("competitors"):
-                insights_context += f"\nCompetitors: {', '.join(insights['competitors'][:3])}"
-        except:
-            pass
-
-    # Check for cached insights in the scan row
     scan_insights = scan.get("ai_insights_json", "")
-    if scan_insights and not insights_context:
+    if scan_insights:
         try:
             ins = json.loads(scan_insights)
             if ins.get("market_segment"):
-                insights_context = f"\nMarket segment: {ins['market_segment']}"
+                insights_context = f"\nWhat this site does: {ins['market_segment']}"
             if ins.get("visibility_summary"):
                 insights_context += f"\nAI visibility: {ins['visibility_summary'][:200]}"
+            if ins.get("competitors"):
+                insights_context += f"\nCompetitors: {', '.join(ins['competitors'][:3])}"
         except:
             pass
 
@@ -115,10 +130,11 @@ Focus area: {focus}{insights_context}
 Scan check results:
 {checks_text}
 
-Current content signals:
-- Title: {current_title or 'Not detected from scan data'}
-- Meta description: {current_meta_desc or 'Not detected from scan data'}
-- H1 heading: {current_h1 or 'Not detected from scan data'}
+ACTUAL current content (fetched from live site):
+- Title: {real_title or 'Could not detect'}
+- Meta description: {real_meta_desc or 'Could not detect'}
+- H1 heading: {real_h1 or 'Could not detect'}
+- First paragraph: {real_intro or 'Could not detect'}
 
 Based on the ACTUAL scan data above, suggest optimized content that will make AI agents better understand and recommend this site.
 
@@ -127,26 +143,26 @@ Respond in this exact JSON format:
   "suggestions": [
     {{
       "element": "Page Title",
-      "current": "the actual current title from scan data, or your best inference from the domain and scan results",
-      "suggested": "optimized title that AI agents will better parse and cite",
+      "current": "{real_title or 'Not detected'}",
+      "suggested": "optimized title that AI agents will better parse and cite — must accurately describe what {domain} actually does",
       "reason": "specific reason why this improves AI discoverability"
     }},
     {{
       "element": "Meta Description",
-      "current": "actual or inferred meta description",
-      "suggested": "optimized meta description (max 160 chars) for AI agent consumption",
+      "current": "{real_meta_desc or 'Not detected'}",
+      "suggested": "optimized meta description (max 160 chars) — must accurately describe {domain}",
       "reason": "specific reason"
     }},
     {{
       "element": "Main Heading (H1)",
-      "current": "actual or inferred H1",
-      "suggested": "optimized H1 for AI readability",
+      "current": "{real_h1 or 'Not detected'}",
+      "suggested": "optimized H1 that clearly states what {domain} does",
       "reason": "specific reason"
     }},
     {{
       "element": "Key Introductory Paragraph",
-      "current": "inferred topic/content of intro paragraph",
-      "suggested": "a clear, structured paragraph that helps AI agents quickly understand what this site offers",
+      "current": "{real_intro[:100] or 'Not detected'}",
+      "suggested": "a clear paragraph that helps AI agents understand what {domain} offers — use the actual content above as basis",
       "reason": "why this helps AI agents"
     }}
   ],

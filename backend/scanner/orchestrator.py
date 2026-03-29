@@ -13,8 +13,11 @@ from scanner.trust import run_trust_checks
 from scanner.discovery import find_product_pages
 from db import update_scan_result
 
+import asyncio
+
 USER_AGENT = "AgentCheck-Scanner/1.0 (Readiness Check)"
-TIMEOUT = 20.0
+TIMEOUT = 15.0
+SCAN_TOTAL_TIMEOUT = 90  # Max total scan time in seconds
 
 logger = logging.getLogger(__name__)
 
@@ -25,12 +28,32 @@ async def run_scan(scan_id: str, domain: str) -> None:
 
     try:
         await update_scan_result(scan_id, status="running")
+        await asyncio.wait_for(_execute_scan(scan_id, domain), timeout=SCAN_TOTAL_TIMEOUT)
+    except asyncio.TimeoutError:
+        logger.warning(f"Scan {scan_id} timed out after {SCAN_TOTAL_TIMEOUT}s")
+        await update_scan_result(
+            scan_id,
+            status="error",
+            report_json=json.dumps({"error": f"Scan timed out after {SCAN_TOTAL_TIMEOUT} seconds. The site may be too slow or blocking our scanner."}),
+        )
+    except Exception as e:
+        logger.exception(f"Scan {scan_id} failed with unexpected error")
+        await update_scan_result(
+            scan_id,
+            status="error",
+            report_json=json.dumps({"error": f"Scan failed: {str(e)[:300]}"}),
+        )
 
-        async with httpx.AsyncClient(
-            headers={"User-Agent": USER_AGENT},
-            timeout=TIMEOUT,
-            follow_redirects=True,
-        ) as client:
+
+async def _execute_scan(scan_id: str, domain: str) -> None:
+    """Inner scan logic, wrapped in a timeout by run_scan."""
+    base_url = f"https://{domain}"
+
+    async with httpx.AsyncClient(
+        headers={"User-Agent": USER_AGENT},
+        timeout=TIMEOUT,
+        follow_redirects=True,
+    ) as client:
             # Fetch homepage
             try:
                 homepage_resp = await client.get(base_url)
@@ -92,15 +115,6 @@ async def run_scan(scan_id: str, domain: str) -> None:
                 except (httpx.RequestError, httpx.HTTPStatusError):
                     continue
 
-            # Combine all HTML for content analysis
-            combined_html = homepage_html
-            for page_url in product_pages[:2]:
-                try:
-                    resp = await client.get(page_url)
-                    combined_html += "\n" + resp.text
-                except (httpx.RequestError, httpx.HTTPStatusError):
-                    continue
-
             # 5. Accessibility checks
             accessibility_results = await run_accessibility_checks(
                 client, base_url, homepage_html
@@ -108,12 +122,12 @@ async def run_scan(scan_id: str, domain: str) -> None:
             all_checks.extend(accessibility_results)
 
             # 6. Transaction checks
-            transaction_results = run_transaction_checks(combined_html, schemas)
+            transaction_results = run_transaction_checks(homepage_html, schemas)
             all_checks.extend(transaction_results)
 
             # 7. Trust checks
             trust_results = await run_trust_checks(
-                client, base_url, combined_html, schemas
+                client, base_url, homepage_html, schemas
             )
             all_checks.extend(trust_results)
 
@@ -161,11 +175,3 @@ async def run_scan(scan_id: str, domain: str) -> None:
                 grade=grade,
                 report_json=json.dumps(report.to_dict()),
             )
-
-    except Exception as e:
-        logger.exception(f"Scan {scan_id} failed with unexpected error")
-        await update_scan_result(
-            scan_id,
-            status="error",
-            report_json=json.dumps({"error": f"Scan failed: {str(e)[:300]}"}),
-        )

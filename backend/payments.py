@@ -43,8 +43,8 @@ async def create_checkout_session(
                 "purchase_type": "fix_files",
                 "scan_id": scan_id,
             },
-            success_url=f"{FRONTEND_URL}/scan/{scan_id}?payment=success",
-            cancel_url=f"{FRONTEND_URL}/scan/{scan_id}?payment=cancelled",
+            success_url=f"{FRONTEND_URL}/report/{scan_id}?payment=success&type=fix_files",
+            cancel_url=f"{FRONTEND_URL}/report/{scan_id}?payment=cancelled",
         )
 
         purchase_id = str(uuid.uuid4())
@@ -69,7 +69,7 @@ async def create_checkout_session(
                 "user_id": user_id,
                 "purchase_type": "pro",
             },
-            success_url=f"{FRONTEND_URL}/dashboard?payment=success",
+            success_url=f"{FRONTEND_URL}/dashboard?payment=success&type=pro",
             cancel_url=f"{FRONTEND_URL}/pricing?payment=cancelled",
         )
 

@@ -164,6 +164,8 @@ const scanDate = computed(() => {
   })
 })
 
+const paymentSuccess = ref(false)
+
 async function fetchReport() {
   try {
     const result = await getScanResult(scanId)
@@ -183,6 +185,18 @@ async function fetchReport() {
       }
     }
     await checkFixAccess()
+
+    // Auto-download fix files after successful payment
+    if (route.query.payment === 'success' && route.query.type === 'fix_files') {
+      paymentSuccess.value = true
+      // Wait a moment for Stripe webhook to process, then re-check access and download
+      setTimeout(async () => {
+        await checkFixAccess()
+        if (hasFixAccess.value) {
+          handleDownloadFixes()
+        }
+      }, 2000)
+    }
   } catch (e) {
     error.value = e.message || 'Could not load report.'
   } finally {
@@ -529,6 +543,14 @@ onMounted(fetchReport)
             </div>
           </template>
         </section>
+
+        <!-- ─── Payment success banner ─── -->
+        <div v-if="paymentSuccess" class="mb-6 border border-score-good/30 rounded-lg p-4 bg-score-good/5 flex items-center gap-3 animate-fade-in">
+          <svg class="w-5 h-5 text-score-good flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p class="text-sm text-score-good font-display font-medium">Payment successful! Your fix files are downloading...</p>
+        </div>
 
         <!-- ─── Fix Files CTA ─── -->
         <section class="mb-14 border border-accent/20 rounded-lg p-6 bg-accent/[0.03] animate-slide-up" style="animation-delay: 150ms">

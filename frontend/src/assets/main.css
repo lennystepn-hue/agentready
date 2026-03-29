@@ -171,7 +171,7 @@
     -webkit-mask-image: radial-gradient(ellipse 60% 50% at 50% 40%, black 20%, transparent 70%);
     mask-image: radial-gradient(ellipse 60% 50% at 50% 40%, black 20%, transparent 70%);
   }
-  .bg-grid > * {
+  .bg-grid > *:not(header):not(nav) {
     position: relative;
     z-index: 1;
   }

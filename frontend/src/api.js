@@ -86,6 +86,11 @@ export async function downloadFixFiles(scanId) {
   return res.blob()
 }
 
+// Delete scan
+export function deleteScan(scanId) {
+  return request('DELETE', `/api/scan/${scanId}`)
+}
+
 // User scans
 export function getUserScans() {
   return request('GET', '/api/user/scans')

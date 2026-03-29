@@ -215,6 +215,20 @@ async def update_scan_result(
         await db.close()
 
 
+async def delete_scan(scan_id: str, user_id: str) -> bool:
+    """Delete a scan if it belongs to the user. Returns True if deleted."""
+    db = await get_db()
+    try:
+        cursor = await db.execute(
+            "DELETE FROM scans WHERE id = ? AND user_id = ?",
+            (scan_id, user_id),
+        )
+        await db.commit()
+        return cursor.rowcount > 0
+    finally:
+        await db.close()
+
+
 async def get_scan(scan_id: str) -> dict | None:
     db = await get_db()
     try:

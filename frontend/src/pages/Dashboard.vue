@@ -8,7 +8,7 @@ import StepFlow from '../components/StepFlow.vue'
 import UpgradeCard from '../components/UpgradeCard.vue'
 import AppLayout from '../components/AppLayout.vue'
 import {
-  getUserScans, getMonitors, startScan,
+  getUserScans, getMonitors, startScan, deleteScan,
   getHostedFiles, activateHostedFiles,
   pingCrawlers, getPingHistory,
   getMentions, getCompetitors, discoverCompetitors,
@@ -146,7 +146,25 @@ const pingsRemaining = computed(() => {
   return Math.max(0, 3 - todayPings)
 })
 
-const shownCompetitors = computed(() => competitors.value.slice(0, 3))
+const shownCompetitors = computed(() => competitors.value.slice(0, 5))
+
+const scoreMessage = computed(() => {
+  const s = bestScan.value?.score
+  if (s == null) return ''
+  if (s >= 90) return 'Excellent. AI agents can find and recommend your site with ease.'
+  if (s >= 70) return 'Strong visibility. A few tweaks could push you to the top tier.'
+  if (s >= 50) return 'Moderate visibility. There are clear opportunities to improve.'
+  if (s >= 30) return 'Low visibility. AI agents are struggling to understand your site.'
+  return 'Critical. Your site is nearly invisible to AI agents.'
+})
+
+const siteTypeLabel = computed(() => {
+  const t = latestCompletedScan.value?.site_type
+  if (!t) return null
+  return t.charAt(0).toUpperCase() + t.slice(1)
+})
+
+const suggestionCount = computed(() => contentSuggs.value?.suggestions?.length || 0)
 
 const simulationRate = computed(() => {
   if (!simulation.value?.steps) return 0
@@ -251,6 +269,16 @@ function copyToClipboard(text) {
   setTimeout(() => { copiedUrl.value = '' }, 2000)
 }
 
+async function handleDeleteScan(scanId) {
+  if (!confirm('Delete this scan? This cannot be undone.')) return
+  try {
+    await deleteScan(scanId)
+    scans.value = scans.value.filter(s => s.scan_id !== scanId)
+  } catch (e) {
+    error.value = e.message || 'Could not delete scan.'
+  }
+}
+
 // ---- Data Loading ----
 
 onMounted(async () => {
@@ -302,294 +330,429 @@ onMounted(async () => {
 
 <template>
   <AppLayout>
-    <div class="flex-1 pb-16 sm:pb-0">
-      <div class="max-w-5xl mx-auto px-6 lg:px-8 py-8">
+    <div class="flex-1 pb-16 sm:pb-0 bg-page">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
 
-        <!-- 1. Scan Bar -->
-        <section class="mb-8 animate-fade-in">
-          <form @submit.prevent="handleScan" class="flex gap-3">
-            <input
-              v-model="scanDomain"
-              type="text"
-              placeholder="Enter a domain to scan..."
-              class="input-field flex-1 text-sm"
-            />
+        <!-- ============================================================ -->
+        <!-- SCAN BAR                                                      -->
+        <!-- ============================================================ -->
+        <section class="mb-10 animate-fade-in">
+          <form @submit.prevent="handleScan" class="relative flex items-center gap-3">
+            <div class="relative flex-1">
+              <!-- Search icon inside input -->
+              <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                <svg class="w-4.5 h-4.5 text-warm-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                v-model="scanDomain"
+                type="text"
+                placeholder="Enter any website to scan..."
+                class="w-full rounded-xl border border-border bg-surface pl-11 pr-4 py-3.5 text-sm text-primary placeholder:text-warm-400 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all shadow-sm"
+              />
+            </div>
             <button
               type="submit"
-              class="btn-primary text-sm px-6 shrink-0"
+              class="btn-primary text-sm px-7 py-3.5 rounded-xl shrink-0 shadow-sm"
               :disabled="scanning || !scanDomain.trim()"
             >
+              <svg v-if="scanning" class="w-4 h-4 animate-spin mr-2 inline" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
               {{ scanning ? 'Scanning...' : 'Run scan' }}
             </button>
           </form>
-          <p v-if="error" class="text-sm text-score-bad mt-2">{{ error }}</p>
+          <p v-if="error" class="text-sm text-score-bad mt-3 pl-1">{{ error }}</p>
         </section>
 
-        <!-- Loading state -->
-        <div v-if="loadingScans" class="py-12 text-center">
-          <svg class="w-5 h-5 text-accent animate-spin mx-auto mb-2" fill="none" viewBox="0 0 24 24">
+        <!-- ============================================================ -->
+        <!-- LOADING STATE                                                 -->
+        <!-- ============================================================ -->
+        <div v-if="loadingScans" class="py-20 text-center">
+          <svg class="w-6 h-6 text-accent animate-spin mx-auto mb-3" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
-          <p class="text-sm text-muted">Loading dashboard...</p>
+          <p class="text-sm text-muted font-body">Loading your dashboard...</p>
         </div>
 
         <template v-else>
 
-          <!-- 2. Hero Row -->
-          <section v-if="completedScans.length > 0" class="mb-8 animate-slide-up">
-            <div class="grid sm:grid-cols-2 gap-4">
-              <!-- Left: Score -->
-              <div class="border border-border rounded-lg p-5 bg-surface flex items-center gap-5">
-                <ScoreCircle :score="bestScan.score" :grade="bestScan.grade" :size="120" />
-                <div>
-                  <p class="font-display font-semibold text-sm text-primary">Your AI Visibility</p>
-                  <p class="font-display text-3xl font-bold tabular-nums mt-1" :class="scoreColorClass(bestScan.score)">
-                    {{ bestScan.score }}
-                  </p>
-                  <p class="text-xs text-muted mt-1">
-                    Grade: <span class="font-display font-semibold" :class="scoreColorClass(bestScan.score)">{{ bestScan.grade }}</span>
-                  </p>
+          <!-- ============================================================ -->
+          <!-- HERO SECTION                                                 -->
+          <!-- ============================================================ -->
+          <section v-if="completedScans.length > 0" class="mb-10 animate-slide-up">
+            <div class="grid sm:grid-cols-5 gap-5">
+
+              <!-- Left: Score Hero (3 cols) -->
+              <div class="sm:col-span-3 border border-border rounded-2xl p-6 sm:p-8 bg-surface shadow-sm">
+                <div class="flex items-center gap-6 sm:gap-8">
+                  <ScoreCircle :score="bestScan.score" :grade="bestScan.grade" :size="160" />
+                  <div class="flex-1 min-w-0">
+                    <p class="font-display font-semibold text-xs uppercase tracking-wider text-muted mb-2">AI Visibility Score</p>
+                    <p class="font-display text-4xl sm:text-5xl font-bold tabular-nums leading-none" :class="scoreColorClass(bestScan.score)">
+                      {{ bestScan.score }}<span class="text-lg text-muted font-normal">/100</span>
+                    </p>
+                    <div class="flex items-center gap-2 mt-3 flex-wrap">
+                      <span class="font-display font-bold text-sm px-2.5 py-1 rounded-lg"
+                        :class="{
+                          'bg-score-good/10 text-score-good': bestScan.score >= 70,
+                          'bg-score-medium/10 text-score-medium': bestScan.score >= 40 && bestScan.score < 70,
+                          'bg-score-bad/10 text-score-bad': bestScan.score < 40,
+                        }">
+                        Grade {{ bestScan.grade }}
+                      </span>
+                      <span v-if="primaryDomain" class="text-sm text-secondary font-body truncate">{{ primaryDomain }}</span>
+                      <span v-if="siteTypeLabel" class="text-[10px] font-display font-medium uppercase tracking-wider text-warm-500 bg-warm-100 px-2 py-0.5 rounded-md">{{ siteTypeLabel }}</span>
+                    </div>
+                    <p class="text-sm text-secondary font-body mt-3 leading-relaxed">{{ scoreMessage }}</p>
+                    <!-- Mention summary inline -->
+                    <p v-if="isPro && mentionFoundCount > 0" class="text-xs text-accent font-display font-medium mt-3 flex items-center gap-1.5">
+                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                      Mentioned in {{ mentionFoundCount }}/{{ mentionTestedCount }} AI queries this week
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              <!-- Right: AI Mention Trend (Pro) -->
-              <div v-if="isPro && mentions.length > 0" class="border border-border rounded-lg p-5 bg-surface">
-                <div class="flex items-center justify-between mb-3">
-                  <p class="font-display font-semibold text-sm text-primary">AI Mention Trend</p>
-                  <span class="text-[10px] font-display font-bold uppercase tracking-wider text-accent bg-accent/10 px-1.5 py-0.5 rounded">Pro</span>
+              <!-- Right: AI Mention Trend (2 cols) -->
+              <div v-if="isPro && mentions.length > 0" class="sm:col-span-2 border border-border rounded-2xl p-6 bg-surface shadow-sm flex flex-col">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+                      <svg class="w-4 h-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                    </div>
+                    <p class="font-display font-semibold text-sm text-primary">AI Mentions</p>
+                  </div>
+                  <span class="text-[10px] font-display font-bold uppercase tracking-wider text-accent bg-accent/10 px-2 py-0.5 rounded-md">Pro</span>
                 </div>
-                <MentionChart :data="mentions" />
-                <div class="flex items-center gap-2 mt-3">
-                  <p class="text-xs text-secondary">
-                    Found in {{ mentionFoundCount }}/{{ mentionTestedCount }} queries this week
+                <div class="flex-1 flex flex-col justify-center">
+                  <MentionChart :data="mentions" />
+                </div>
+                <div class="flex items-center justify-between mt-4 pt-3 border-t border-border-light">
+                  <p class="text-xs text-secondary font-body">
+                    {{ mentionFoundCount }}/{{ mentionTestedCount }} queries
                   </p>
-                  <span v-if="mentionTrend > 0" class="text-xs text-score-good font-display font-medium">
-                    &#9650; +{{ mentionTrend }}
+                  <span v-if="mentionTrend > 0" class="inline-flex items-center gap-1 text-xs text-score-good font-display font-semibold bg-score-good/8 px-2 py-0.5 rounded-md">
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" /></svg>
+                    +{{ mentionTrend }}
                   </span>
-                  <span v-else-if="mentionTrend < 0" class="text-xs text-score-bad font-display font-medium">
-                    &#9660; {{ mentionTrend }}
+                  <span v-else-if="mentionTrend < 0" class="inline-flex items-center gap-1 text-xs text-score-bad font-display font-semibold bg-score-bad/8 px-2 py-0.5 rounded-md">
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                    {{ mentionTrend }}
                   </span>
-                  <span v-else class="text-xs text-muted font-display font-medium">
-                    &#8212; No change
-                  </span>
+                  <span v-else class="text-xs text-muted font-display font-medium">No change</span>
                 </div>
               </div>
 
-              <!-- Right fallback for free users or no mentions -->
-              <div v-else class="border border-border rounded-lg p-5 bg-surface flex flex-col justify-center">
-                <p class="font-display font-semibold text-sm text-primary mb-1">AI Mention Trend</p>
-                <p class="text-xs text-muted">
-                  <template v-if="!isPro">Upgrade to Pro to track AI mentions of your site.</template>
-                  <template v-else>Run a mention scan to see how often AI agents reference your domain.</template>
+              <!-- Right fallback: no mentions or free -->
+              <div v-else class="sm:col-span-2 border border-border rounded-2xl p-6 bg-surface shadow-sm flex flex-col justify-center">
+                <div class="flex items-center gap-2 mb-4">
+                  <div class="w-8 h-8 rounded-lg bg-warm-100 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-warm-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                  </div>
+                  <p class="font-display font-semibold text-sm text-primary">AI Mentions</p>
+                </div>
+                <p class="text-sm text-secondary font-body leading-relaxed">
+                  <template v-if="!isPro">Upgrade to Pro to track how often AI agents mention your site in their responses.</template>
+                  <template v-else>Run a mention scan to see how often AI agents reference your domain across queries.</template>
                 </p>
+                <div v-if="!isPro" class="mt-4">
+                  <router-link to="/pricing" class="inline-flex items-center gap-1.5 text-xs font-display font-semibold text-accent hover:text-accent-hover transition-colors">
+                    Learn more
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+                  </router-link>
+                </div>
               </div>
             </div>
           </section>
 
           <!-- No scans yet -->
-          <section v-else class="mb-8 animate-slide-up">
-            <div class="border border-dashed border-border rounded-lg p-10 text-center">
-              <p class="font-display font-semibold text-primary mb-1">No scans yet</p>
-              <p class="text-sm text-secondary mb-5">Run your first scan to see how your site performs with AI agents.</p>
+          <section v-else class="mb-10 animate-slide-up">
+            <div class="border-2 border-dashed border-border rounded-2xl p-12 sm:p-16 text-center bg-surface/50">
+              <div class="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-5">
+                <svg class="w-8 h-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              </div>
+              <p class="font-display text-xl font-bold text-primary mb-2">No scans yet</p>
+              <p class="text-sm text-secondary font-body max-w-sm mx-auto">Enter a domain above to run your first scan and discover how AI agents see your site.</p>
             </div>
           </section>
 
-          <!-- PRO WIDGETS -->
+          <!-- ============================================================ -->
+          <!-- PRO WIDGETS                                                  -->
+          <!-- ============================================================ -->
           <template v-if="isPro">
 
-            <!-- 3. Automation Row -->
-            <section class="mb-8 animate-slide-up" style="animation-delay: 60ms">
-              <div class="grid sm:grid-cols-2 gap-4">
+            <!-- ---- SECTION: Automation ---- -->
+            <section class="mb-10 animate-slide-up" style="animation-delay: 60ms">
+              <div class="flex items-center gap-3 mb-5">
+                <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+                  <svg class="w-4 h-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                </div>
+                <div>
+                  <h2 class="font-display text-base font-bold tracking-tight text-primary">Automation</h2>
+                  <p class="text-xs text-muted font-body">Hosted AI files and crawler management</p>
+                </div>
+              </div>
+              <div class="grid sm:grid-cols-2 gap-5">
 
-                <!-- Hosted Files Card -->
-                <div class="border border-border rounded-lg p-5 bg-surface">
-                  <div class="flex items-center justify-between mb-3">
-                    <p class="font-display font-semibold text-sm text-primary">Hosted Files</p>
-                    <span class="text-[10px] font-display font-bold uppercase tracking-wider text-accent bg-accent/10 px-1.5 py-0.5 rounded">Pro</span>
+                <!-- ---- Hosted Files Card ---- -->
+                <div class="border border-border rounded-2xl p-6 bg-surface shadow-sm">
+                  <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2.5">
+                      <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+                        <svg class="w-4 h-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                      </div>
+                      <p class="font-display font-semibold text-sm text-primary">Hosted Files</p>
+                    </div>
+                    <span class="text-[10px] font-display font-bold uppercase tracking-wider text-accent bg-accent/10 px-2 py-0.5 rounded-md">Pro</span>
                   </div>
 
                   <template v-if="filesActive">
-                    <div class="space-y-2">
+                    <div class="space-y-2.5">
                       <div
                         v-for="file in hostedFiles"
                         :key="file.id || file.file_type"
-                        class="flex items-center justify-between gap-2 text-xs"
+                        class="flex items-center gap-3 p-3 rounded-xl bg-warm-50 border border-border-light"
                       >
+                        <div class="w-7 h-7 rounded-lg bg-score-good/10 flex items-center justify-center shrink-0">
+                          <svg class="w-3.5 h-3.5 text-score-good" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                        </div>
                         <div class="min-w-0 flex-1">
-                          <p class="font-display font-medium text-primary truncate">{{ file.file_type }}</p>
-                          <p class="text-muted truncate">{{ hostedUrl(file) }}</p>
+                          <p class="text-xs font-display font-semibold text-primary">{{ file.file_type }}</p>
+                          <p class="text-[11px] text-muted truncate font-body">{{ hostedUrl(file) }}</p>
                         </div>
                         <button
-                          @click="copyToClipboard(hostedUrl(file))"
-                          class="text-xs text-accent hover:text-accent-hover font-display font-medium shrink-0"
+                          @click.prevent="copyToClipboard(hostedUrl(file))"
+                          class="shrink-0 inline-flex items-center gap-1 text-xs font-display font-medium px-2.5 py-1.5 rounded-lg transition-all"
+                          :class="copiedUrl === hostedUrl(file) ? 'bg-score-good/10 text-score-good' : 'bg-warm-100 text-secondary hover:bg-accent/10 hover:text-accent'"
                         >
-                          {{ copiedUrl === hostedUrl(file) ? 'Copied!' : 'Copy URL' }}
+                          <svg v-if="copiedUrl === hostedUrl(file)" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                          <svg v-else class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                          {{ copiedUrl === hostedUrl(file) ? 'Copied' : 'Copy' }}
                         </button>
                       </div>
                     </div>
-                    <p v-if="hostedFiles[0]?.updated_at" class="text-[11px] text-muted mt-3">
-                      Last updated: {{ formatDate(hostedFiles[0].updated_at) }}
-                    </p>
+                    <div class="mt-4 pt-3 border-t border-border-light">
+                      <p class="text-[11px] text-muted font-body flex items-center gap-1.5">
+                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <template v-if="hostedFiles[0]?.updated_at">Last updated {{ formatDate(hostedFiles[0].updated_at) }}</template>
+                        <template v-else>Active and serving</template>
+                      </p>
+                      <p class="text-[11px] text-secondary font-body mt-1.5">Add a redirect from your domain's <code class="bg-warm-100 px-1 rounded text-[10px]">/.well-known/</code> to these hosted URLs.</p>
+                    </div>
                   </template>
 
                   <template v-else>
-                    <p class="text-xs text-secondary mb-3">
-                      Generate and host AI-ready files (llms.txt, robots.txt directives) on your domain.
+                    <p class="text-sm text-secondary font-body mb-4 leading-relaxed">
+                      Generate and host AI-ready files like <strong class="font-semibold text-primary">llms.txt</strong> and <strong class="font-semibold text-primary">robots.txt</strong> directives on your domain.
                     </p>
                     <button
                       @click="handleActivateFiles"
                       :disabled="activatingFiles || !primaryDomain"
-                      class="text-xs text-accent hover:text-accent-hover font-display font-medium disabled:opacity-50"
+                      class="btn-primary text-sm px-5 py-2.5 rounded-xl disabled:opacity-50 shadow-sm"
                     >
-                      <template v-if="activatingFiles">
-                        <svg class="w-3 h-3 animate-spin inline mr-1" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-                        Activating...
-                      </template>
-                      <template v-else>Activate AI Files</template>
+                      <svg v-if="activatingFiles" class="w-4 h-4 animate-spin inline mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                      {{ activatingFiles ? 'Activating...' : 'Activate AI Files' }}
                     </button>
                   </template>
                 </div>
 
-                <!-- Crawler Status Card -->
-                <div class="border border-border rounded-lg p-5 bg-surface">
-                  <div class="flex items-center justify-between mb-3">
-                    <p class="font-display font-semibold text-sm text-primary">Crawler Status</p>
+                <!-- ---- Crawler Status Card ---- -->
+                <div class="border border-border rounded-2xl p-6 bg-surface shadow-sm">
+                  <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2.5">
+                      <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+                        <svg class="w-4 h-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.14 0M1.394 9.393c5.857-5.858 15.355-5.858 21.213 0" /></svg>
+                      </div>
+                      <p class="font-display font-semibold text-sm text-primary">Crawler Status</p>
+                    </div>
                     <button
                       @click="handlePing"
                       :disabled="pinging || pingsRemaining <= 0"
-                      class="text-xs text-accent hover:text-accent-hover font-display font-medium disabled:opacity-50"
+                      class="inline-flex items-center gap-1.5 text-xs font-display font-semibold px-3.5 py-2 rounded-lg bg-accent/10 text-accent hover:bg-accent/15 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                      <template v-if="pinging">
-                        <svg class="w-3 h-3 animate-spin inline mr-1" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-                        Pinging...
-                      </template>
-                      <template v-else>Ping now</template>
+                      <svg v-if="pinging" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                      <svg v-else class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728M12 12v.01" /></svg>
+                      {{ pinging ? 'Pinging...' : 'Ping now' }}
                     </button>
                   </div>
 
-                  <div v-if="lastPing" class="mb-2">
-                    <p class="text-xs text-secondary">
+                  <!-- Big stat -->
+                  <div class="mb-4">
+                    <p class="font-display text-3xl font-bold tabular-nums text-primary">{{ pingHistory.length }}</p>
+                    <p class="text-xs text-muted font-body mt-0.5">crawlers pinged total</p>
+                  </div>
+
+                  <!-- Remaining pings -->
+                  <div class="flex items-center gap-2 mb-4 p-2.5 rounded-lg bg-warm-50 border border-border-light">
+                    <div class="flex gap-1">
+                      <span v-for="i in 3" :key="i" class="w-2 h-2 rounded-full" :class="i <= pingsRemaining ? 'bg-accent' : 'bg-warm-200'" />
+                    </div>
+                    <p class="text-xs text-secondary font-body">{{ pingsRemaining }} of 3 remaining today</p>
+                  </div>
+
+                  <!-- Last ping info -->
+                  <div v-if="lastPing" class="mb-4">
+                    <p class="text-xs text-secondary font-body">
                       Last ping: {{ formatDate(lastPing.created_at || lastPing.pinged_at) }} at {{ formatTime(lastPing.created_at || lastPing.pinged_at) }}
                     </p>
                   </div>
-                  <p v-else class="text-xs text-muted mb-2">No pings sent yet.</p>
+                  <p v-else class="text-xs text-muted font-body mb-4">No pings sent yet. Notify crawlers to re-index your site.</p>
 
-                  <p class="text-[11px] text-muted mb-3">{{ pingsRemaining }} pings remaining today</p>
-
-                  <div v-if="recentPings.length > 0" class="space-y-1">
+                  <!-- Recent ping log -->
+                  <div v-if="recentPings.length > 0" class="space-y-1.5">
                     <div
                       v-for="(ping, idx) in recentPings"
                       :key="idx"
-                      class="flex items-center gap-2 text-[11px]"
+                      class="flex items-center gap-2.5 text-xs py-1.5"
                     >
-                      <span class="w-1.5 h-1.5 rounded-full shrink-0"
+                      <span class="w-2 h-2 rounded-full shrink-0"
                         :class="ping.status_code >= 200 && ping.status_code < 400 ? 'bg-score-good' : 'bg-score-bad'" />
-                      <span class="text-muted">{{ ping.ping_type }}</span>
-                      <span class="text-secondary truncate">{{ ping.target_url?.replace('https://', '').slice(0, 40) }}</span>
+                      <span class="text-secondary font-display font-medium">{{ ping.ping_type }}</span>
+                      <span class="text-muted font-body truncate flex-1">{{ ping.target_url?.replace('https://', '').slice(0, 40) }}</span>
                     </div>
                   </div>
                 </div>
               </div>
             </section>
 
-            <!-- 4. Intelligence Row -->
-            <section class="mb-8 animate-slide-up" style="animation-delay: 120ms">
-              <div class="grid sm:grid-cols-2 gap-4">
+            <!-- ---- SECTION: Intelligence ---- -->
+            <section class="mb-10 animate-slide-up" style="animation-delay: 120ms">
+              <div class="flex items-center gap-3 mb-5">
+                <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+                  <svg class="w-4 h-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                </div>
+                <div>
+                  <h2 class="font-display text-base font-bold tracking-tight text-primary">Intelligence</h2>
+                  <p class="text-xs text-muted font-body">Competitor tracking and content optimization</p>
+                </div>
+              </div>
+              <div class="grid sm:grid-cols-2 gap-5">
 
-                <!-- Competitor Tracking Card -->
-                <div class="border border-border rounded-lg p-5 bg-surface">
-                  <div class="flex items-center justify-between mb-3">
-                    <p class="font-display font-semibold text-sm text-primary">Competitor Tracking</p>
+                <!-- ---- Competitor Tracking Card ---- -->
+                <div class="border border-border rounded-2xl p-6 bg-surface shadow-sm">
+                  <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2.5">
+                      <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+                        <svg class="w-4 h-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7" /></svg>
+                      </div>
+                      <p class="font-display font-semibold text-sm text-primary">Competitors</p>
+                    </div>
                     <template v-if="competitors.length > 0">
                       <router-link
                         :to="{ path: '/compare' }"
-                        class="text-xs text-accent hover:text-accent-hover font-display font-medium"
+                        class="inline-flex items-center gap-1 text-xs text-accent hover:text-accent-hover font-display font-semibold transition-colors"
                       >
-                        Scan all
+                        Compare all
+                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
                       </router-link>
                     </template>
                   </div>
 
                   <template v-if="shownCompetitors.length > 0">
-                    <div class="space-y-2">
+                    <!-- Your domain at top -->
+                    <div v-if="bestScan" class="flex items-center justify-between p-3 rounded-xl bg-accent/5 border border-accent/15 mb-2.5">
+                      <div class="flex items-center gap-2.5">
+                        <div class="w-6 h-6 rounded-md bg-accent/15 flex items-center justify-center">
+                          <svg class="w-3 h-3 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                        </div>
+                        <span class="text-xs font-display font-bold text-accent truncate">{{ primaryDomain }}</span>
+                      </div>
+                      <span class="text-sm font-display font-bold tabular-nums" :class="scoreColorClass(bestScan.score)">{{ bestScan.score }}</span>
+                    </div>
+                    <!-- Competitor rows -->
+                    <div class="space-y-1">
                       <div
-                        v-for="comp in shownCompetitors"
+                        v-for="(comp, idx) in shownCompetitors"
                         :key="comp.competitor_domain || comp.domain"
-                        class="flex items-center justify-between text-xs"
+                        class="flex items-center justify-between p-3 rounded-xl hover:bg-warm-50 transition-colors"
                       >
-                        <span class="font-display font-medium text-primary truncate">{{ comp.competitor_domain || comp.domain }}</span>
+                        <div class="flex items-center gap-2.5">
+                          <span class="w-6 h-6 rounded-md bg-warm-100 flex items-center justify-center text-[10px] font-display font-bold text-warm-500">{{ idx + 1 }}</span>
+                          <span class="text-xs font-display font-medium text-primary truncate">{{ comp.competitor_domain || comp.domain }}</span>
+                        </div>
                         <span
-                          class="font-display font-bold tabular-nums"
+                          class="text-sm font-display font-bold tabular-nums"
                           :class="scoreColorClass(comp.last_score ?? comp.score)"
                         >
-                          {{ comp.last_score ?? comp.score ?? '—' }}
+                          {{ comp.last_score ?? comp.score ?? '--' }}
                         </span>
                       </div>
                     </div>
-                    <p v-if="competitors.length > 3" class="text-[11px] text-muted mt-2">
-                      + {{ competitors.length - 3 }} more
+                    <p v-if="competitors.length > 5" class="text-xs text-muted font-body mt-3 text-center">
+                      + {{ competitors.length - 5 }} more competitors tracked
                     </p>
                   </template>
 
                   <template v-else>
-                    <p class="text-xs text-secondary mb-3">
-                      Find and track competitors in your space to compare AI visibility.
+                    <p class="text-sm text-secondary font-body mb-4 leading-relaxed">
+                      Find and track competitors in your space to compare AI visibility scores side by side.
                     </p>
                     <button
                       @click="handleDiscoverCompetitors"
                       :disabled="discoveringComps || !primaryDomain"
-                      class="text-xs text-accent hover:text-accent-hover font-display font-medium disabled:opacity-50"
+                      class="btn-primary text-sm px-5 py-2.5 rounded-xl disabled:opacity-50 shadow-sm"
                     >
-                      <template v-if="discoveringComps">
-                        <svg class="w-3 h-3 animate-spin inline mr-1" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-                        Discovering...
-                      </template>
-                      <template v-else>Discover competitors</template>
+                      <svg v-if="discoveringComps" class="w-4 h-4 animate-spin inline mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                      {{ discoveringComps ? 'Discovering...' : 'Discover competitors' }}
                     </button>
                   </template>
                 </div>
 
-                <!-- Content Suggestions Card -->
-                <div class="border border-border rounded-lg p-5 bg-surface">
-                  <div class="flex items-center justify-between mb-3">
-                    <p class="font-display font-semibold text-sm text-primary">Content Suggestions</p>
-                    <template v-if="contentSuggs?.suggestions?.length > 0">
-                      <button
-                        @click="suggestionsExpanded = !suggestionsExpanded"
-                        class="text-xs text-accent hover:text-accent-hover font-display font-medium"
-                      >
-                        {{ suggestionsExpanded ? 'Collapse' : 'View suggestions' }}
-                      </button>
+                <!-- ---- Content Suggestions Card ---- -->
+                <div class="border border-border rounded-2xl p-6 bg-surface shadow-sm">
+                  <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2.5">
+                      <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+                        <svg class="w-4 h-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                      </div>
+                      <p class="font-display font-semibold text-sm text-primary">Content Suggestions</p>
+                    </div>
+                    <template v-if="suggestionCount > 0">
+                      <span class="text-[10px] font-display font-bold bg-accent text-white px-2 py-0.5 rounded-full tabular-nums">{{ suggestionCount }}</span>
                     </template>
                   </div>
 
-                  <template v-if="contentSuggs?.suggestions?.length > 0">
-                    <p class="text-xs text-secondary mb-2">
-                      {{ contentSuggs.suggestions.length }} suggestions generated
+                  <template v-if="suggestionCount > 0">
+                    <p class="text-sm text-secondary font-body mb-4">
+                      {{ suggestionCount }} improvement{{ suggestionCount > 1 ? 's' : '' }} found to boost your visibility score.
                     </p>
 
-                    <div v-if="suggestionsExpanded" class="space-y-3 mt-3">
+                    <button
+                      @click="suggestionsExpanded = !suggestionsExpanded"
+                      class="inline-flex items-center gap-1.5 text-xs font-display font-semibold text-accent hover:text-accent-hover transition-colors mb-1"
+                    >
+                      <svg class="w-3.5 h-3.5 transition-transform" :class="suggestionsExpanded ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                      {{ suggestionsExpanded ? 'Collapse' : 'View suggestions' }}
+                    </button>
+
+                    <div v-if="suggestionsExpanded" class="space-y-3 mt-4">
                       <div
                         v-for="(sugg, idx) in contentSuggs.suggestions"
                         :key="idx"
-                        class="border border-border-light rounded p-3"
+                        class="rounded-xl border border-border-light p-4 bg-warm-50/50"
                       >
-                        <p class="text-xs font-display font-medium text-primary mb-1">{{ sugg.element || sugg.title || `Suggestion ${idx + 1}` }}</p>
-                        <p v-if="sugg.reason" class="text-[11px] text-muted mb-1.5">{{ sugg.reason }}</p>
-                        <div v-if="sugg.current" class="mb-1">
-                          <p class="text-[10px] text-muted uppercase tracking-wider mb-0.5">Current</p>
-                          <p class="text-xs text-secondary bg-warm-50 rounded p-1.5">{{ sugg.current }}</p>
+                        <div class="flex items-start justify-between gap-2 mb-2">
+                          <p class="text-sm font-display font-semibold text-primary">{{ sugg.element || sugg.title || `Suggestion ${idx + 1}` }}</p>
+                          <span class="text-[10px] font-display font-bold uppercase tracking-wider text-warm-500 bg-warm-100 px-1.5 py-0.5 rounded shrink-0">#{{ idx + 1 }}</span>
+                        </div>
+                        <p v-if="sugg.reason" class="text-xs text-muted font-body mb-3 leading-relaxed">{{ sugg.reason }}</p>
+
+                        <div v-if="sugg.current" class="mb-2.5">
+                          <p class="text-[10px] text-muted uppercase tracking-wider font-display font-semibold mb-1">Current</p>
+                          <p class="text-xs text-secondary font-body bg-score-bad/5 border border-score-bad/10 rounded-lg p-2.5 leading-relaxed">{{ sugg.current }}</p>
                         </div>
                         <div v-if="sugg.suggested">
-                          <p class="text-[10px] text-muted uppercase tracking-wider mb-0.5">Suggested</p>
-                          <div class="flex items-start justify-between gap-2">
-                            <p class="text-xs text-primary bg-score-good/5 rounded p-1.5 flex-1">{{ sugg.suggested }}</p>
+                          <p class="text-[10px] text-muted uppercase tracking-wider font-display font-semibold mb-1">Suggested</p>
+                          <div class="flex items-start gap-2">
+                            <p class="text-xs text-primary font-body bg-score-good/5 border border-score-good/10 rounded-lg p-2.5 flex-1 leading-relaxed">{{ sugg.suggested }}</p>
                             <button
                               @click="copyToClipboard(sugg.suggested)"
-                              class="text-[11px] text-accent hover:text-accent-hover font-display font-medium shrink-0 mt-1"
+                              class="shrink-0 mt-1 inline-flex items-center gap-1 text-[11px] font-display font-medium px-2 py-1 rounded-lg transition-all"
+                              :class="copiedUrl === sugg.suggested ? 'bg-score-good/10 text-score-good' : 'bg-warm-100 text-secondary hover:bg-accent/10 hover:text-accent'"
                             >
-                              {{ copiedUrl === sugg.suggested ? 'Copied!' : 'Copy' }}
+                              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                              {{ copiedUrl === sugg.suggested ? 'Copied' : 'Copy' }}
                             </button>
                           </div>
                         </div>
@@ -598,57 +761,90 @@ onMounted(async () => {
                   </template>
 
                   <template v-else>
-                    <p class="text-xs text-secondary mb-3">
-                      Get AI-powered content improvements to boost your visibility score.
+                    <p class="text-sm text-secondary font-body mb-4 leading-relaxed">
+                      Get AI-powered content improvements tailored to your site to boost your visibility score.
                     </p>
                     <button
                       @click="handleOptimize"
                       :disabled="optimizing || !latestCompletedScan"
-                      class="text-xs text-accent hover:text-accent-hover font-display font-medium disabled:opacity-50"
+                      class="btn-primary text-sm px-5 py-2.5 rounded-xl disabled:opacity-50 shadow-sm"
                     >
-                      <template v-if="optimizing">
-                        <svg class="w-3 h-3 animate-spin inline mr-1" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-                        Generating...
-                      </template>
-                      <template v-else>Generate suggestions</template>
+                      <svg v-if="optimizing" class="w-4 h-4 animate-spin inline mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                      {{ optimizing ? 'Generating...' : 'Generate suggestions' }}
                     </button>
                   </template>
                 </div>
               </div>
             </section>
 
-            <!-- 5. Agent Simulator Card (full width) -->
-            <section class="mb-8 animate-slide-up" style="animation-delay: 180ms">
-              <div class="border border-border rounded-lg p-5 bg-surface">
-                <div class="flex items-center justify-between mb-3">
-                  <p class="font-display font-semibold text-sm text-primary">Agent Simulator</p>
-                  <span class="text-[10px] font-display font-bold uppercase tracking-wider text-accent bg-accent/10 px-1.5 py-0.5 rounded">Pro</span>
+            <!-- ---- SECTION: Activity ---- -->
+            <section class="mb-10 animate-slide-up" style="animation-delay: 180ms">
+              <div class="flex items-center gap-3 mb-5">
+                <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+                  <svg class="w-4 h-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <div>
+                  <h2 class="font-display text-base font-bold tracking-tight text-primary">Activity</h2>
+                  <p class="text-xs text-muted font-body">Agent simulation and scan history</p>
+                </div>
+              </div>
+
+              <!-- ---- Agent Simulator Card (full width) ---- -->
+              <div class="border border-border rounded-2xl p-6 bg-surface shadow-sm">
+                <div class="flex items-center justify-between mb-5">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+                      <svg class="w-4 h-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                    </div>
+                    <p class="font-display font-semibold text-sm text-primary">Agent Simulator</p>
+                  </div>
+                  <span class="text-[10px] font-display font-bold uppercase tracking-wider text-accent bg-accent/10 px-2 py-0.5 rounded-md">Pro</span>
                 </div>
 
                 <template v-if="simulation?.steps">
-                  <div class="flex items-center gap-3 mb-4">
-                    <p class="text-xs text-secondary">
-                      Completion rate:
-                      <span class="font-display font-bold tabular-nums" :class="scoreColorClass(simulationRate)">{{ simulationRate }}%</span>
-                    </p>
+                  <!-- Progress bar -->
+                  <div class="mb-5">
+                    <div class="flex items-center justify-between mb-2">
+                      <p class="text-xs text-secondary font-body">Completion rate</p>
+                      <p class="text-sm font-display font-bold tabular-nums" :class="scoreColorClass(simulationRate)">{{ simulationRate }}%</p>
+                    </div>
+                    <div class="w-full h-2.5 rounded-full bg-warm-100 overflow-hidden">
+                      <div
+                        class="h-full rounded-full transition-all duration-700 ease-out"
+                        :class="{
+                          'bg-score-good': simulationRate >= 70,
+                          'bg-score-medium': simulationRate >= 40 && simulationRate < 70,
+                          'bg-score-bad': simulationRate < 40,
+                        }"
+                        :style="{ width: simulationRate + '%' }"
+                      />
+                    </div>
+                    <div class="flex items-center gap-4 mt-2">
+                      <span class="flex items-center gap-1.5 text-[11px] text-muted font-body">
+                        <span class="w-2 h-2 rounded-full bg-score-good"></span> Pass
+                      </span>
+                      <span class="flex items-center gap-1.5 text-[11px] text-muted font-body">
+                        <span class="w-2 h-2 rounded-full bg-score-bad"></span> Fail
+                      </span>
+                      <span class="flex items-center gap-1.5 text-[11px] text-muted font-body">
+                        <span class="w-2 h-2 rounded-full bg-warm-200"></span> Blocked
+                      </span>
+                    </div>
                   </div>
                   <StepFlow :steps="simulation.steps" />
                 </template>
 
                 <template v-else>
-                  <p class="text-xs text-secondary mb-3">
-                    Simulate how an AI agent navigates and understands your site step by step.
+                  <p class="text-sm text-secondary font-body mb-4 leading-relaxed">
+                    Simulate how an AI agent navigates and understands your site step by step. See exactly where agents get stuck.
                   </p>
                   <button
                     @click="handleSimulate"
                     :disabled="simulating || !latestCompletedScan"
-                    class="text-xs text-accent hover:text-accent-hover font-display font-medium disabled:opacity-50"
+                    class="btn-primary text-sm px-5 py-2.5 rounded-xl disabled:opacity-50 shadow-sm"
                   >
-                    <template v-if="simulating">
-                      <svg class="w-3 h-3 animate-spin inline mr-1" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-                      Running simulation...
-                    </template>
-                    <template v-else>Run simulation</template>
+                    <svg v-if="simulating" class="w-4 h-4 animate-spin inline mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                    {{ simulating ? 'Running simulation...' : 'Run simulation' }}
                   </button>
                 </template>
               </div>
@@ -657,37 +853,76 @@ onMounted(async () => {
           </template>
           <!-- END PRO WIDGETS -->
 
-          <!-- 6. Recent Scans -->
-          <section class="mb-8 animate-slide-up" :style="{ animationDelay: isPro ? '240ms' : '60ms' }">
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="font-display text-lg font-bold tracking-tight">Recent scans</h2>
-              <router-link to="/" class="text-[13px] text-accent hover:text-accent-hover transition-colors font-display font-medium">
-                + New scan
+          <!-- ============================================================ -->
+          <!-- FREE USER: Blurred Pro Preview                               -->
+          <!-- ============================================================ -->
+          <template v-if="!isPro && completedScans.length > 0">
+            <section class="mb-10 animate-slide-up" style="animation-delay: 80ms">
+              <div class="relative rounded-2xl border border-border overflow-hidden">
+                <!-- Blurred preview content -->
+                <div class="grid sm:grid-cols-2 gap-5 p-6 opacity-40 blur-[2px] pointer-events-none select-none" aria-hidden="true">
+                  <div class="border border-border rounded-xl p-5 bg-surface h-44"></div>
+                  <div class="border border-border rounded-xl p-5 bg-surface h-44"></div>
+                  <div class="border border-border rounded-xl p-5 bg-surface h-44"></div>
+                  <div class="border border-border rounded-xl p-5 bg-surface h-44"></div>
+                </div>
+                <!-- Overlay CTA -->
+                <div class="absolute inset-0 flex flex-col items-center justify-center bg-surface/60 backdrop-blur-sm">
+                  <div class="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center mb-4">
+                    <svg class="w-7 h-7 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                  </div>
+                  <p class="font-display text-lg font-bold text-primary mb-1">Unlock Pro features</p>
+                  <p class="text-sm text-secondary font-body mb-5 max-w-xs text-center">AI file hosting, crawler pinging, competitor tracking, content suggestions, and agent simulation.</p>
+                  <router-link to="/pricing" class="btn-primary text-sm px-6 py-2.5 rounded-xl shadow-sm">
+                    Upgrade to Pro
+                  </router-link>
+                </div>
+              </div>
+            </section>
+          </template>
+
+          <!-- ============================================================ -->
+          <!-- RECENT SCANS                                                 -->
+          <!-- ============================================================ -->
+          <section class="mb-10 animate-slide-up" :style="{ animationDelay: isPro ? '240ms' : '120ms' }">
+            <div class="flex items-center justify-between mb-5">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-warm-100 flex items-center justify-center">
+                  <svg class="w-4 h-4 text-warm-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <h2 class="font-display text-base font-bold tracking-tight text-primary">Recent Scans</h2>
+              </div>
+              <router-link to="/" class="inline-flex items-center gap-1.5 text-xs text-accent hover:text-accent-hover transition-colors font-display font-semibold px-3 py-1.5 rounded-lg bg-accent/5 hover:bg-accent/10">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
+                New scan
               </router-link>
             </div>
 
-            <div v-if="scans.length === 0" class="border border-dashed border-border rounded-lg p-10 text-center">
-              <p class="font-display font-semibold text-primary mb-1">No scans yet</p>
-              <p class="text-sm text-secondary">Run your first scan above to get started.</p>
+            <div v-if="scans.length === 0" class="border-2 border-dashed border-border rounded-2xl p-12 text-center bg-surface/50">
+              <div class="w-12 h-12 rounded-xl bg-warm-100 flex items-center justify-center mx-auto mb-4">
+                <svg class="w-6 h-6 text-warm-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+              </div>
+              <p class="font-display font-bold text-primary mb-1">No scans yet</p>
+              <p class="text-sm text-secondary font-body">Run your first scan above to get started.</p>
             </div>
 
-            <div v-else class="space-y-2">
+            <div v-else class="border border-border rounded-2xl bg-surface shadow-sm overflow-hidden divide-y divide-border-light">
               <router-link
                 v-for="scan in recentScans"
                 :key="scan.scan_id"
                 :to="scan.status === 'completed' ? { name: 'Report', params: { id: scan.scan_id } } : { name: 'ScanProgress', params: { id: scan.scan_id } }"
-                class="flex items-center gap-5 px-5 py-4 border border-border rounded-lg bg-surface hover:border-warm-300 transition-colors group cursor-pointer"
+                class="flex items-center gap-4 sm:gap-5 px-5 sm:px-6 py-4 hover:bg-warm-50/60 transition-colors group cursor-pointer"
               >
                 <!-- Score circle or spinner -->
                 <div class="flex-shrink-0 w-12 h-12 flex items-center justify-center">
                   <ScoreCircle v-if="scan.status === 'completed' && scan.score != null" :score="scan.score" :size="48" />
-                  <div v-else-if="scan.status === 'pending' || scan.status === 'running'" class="w-10 h-10 rounded-full border-2 border-accent/30 flex items-center justify-center">
+                  <div v-else-if="scan.status === 'pending' || scan.status === 'running'" class="w-11 h-11 rounded-full border-2 border-accent/20 bg-accent/5 flex items-center justify-center">
                     <svg class="w-5 h-5 text-accent animate-spin" fill="none" viewBox="0 0 24 24">
                       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                       <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
                   </div>
-                  <div v-else class="w-10 h-10 rounded-full border-2 border-score-bad/30 flex items-center justify-center">
+                  <div v-else class="w-11 h-11 rounded-full border-2 border-score-bad/20 bg-score-bad/5 flex items-center justify-center">
                     <span class="text-xs text-score-bad font-display font-bold">ERR</span>
                   </div>
                 </div>
@@ -700,43 +935,60 @@ onMounted(async () => {
                     </p>
                     <span
                       v-if="scan.site_type"
-                      class="text-[10px] font-display font-medium uppercase tracking-wider text-warm-500 bg-warm-100 px-1.5 py-0.5 rounded"
+                      class="text-[10px] font-display font-medium uppercase tracking-wider text-warm-500 bg-warm-100 px-1.5 py-0.5 rounded-md"
                     >
                       {{ scan.site_type }}
                     </span>
-                    <span
-                      v-if="scan.status === 'completed' && scan.score != null"
-                      class="text-xs font-display font-bold px-1.5 py-0.5 rounded"
-                      :class="{
-                        'bg-score-good/10 text-score-good': scan.score >= 70,
-                        'bg-score-medium/10 text-score-medium': scan.score >= 40 && scan.score < 70,
-                        'bg-score-bad/10 text-score-bad': scan.score < 40,
-                      }"
-                    >
-                      {{ scan.grade }}
-                    </span>
-                    <span
-                      v-else-if="scan.status === 'running' || scan.status === 'pending'"
-                      class="text-[11px] font-display text-accent bg-accent/10 px-1.5 py-0.5 rounded"
-                    >
-                      Scanning...
-                    </span>
                   </div>
-                  <p class="text-xs text-muted mt-0.5">
+                  <p class="text-xs text-muted font-body mt-0.5">
                     <span v-if="scan.created_at">{{ formatDate(scan.created_at) }}</span>
                   </p>
                 </div>
 
-                <!-- Arrow -->
-                <svg class="w-4 h-4 text-warm-300 group-hover:text-accent transition-colors flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
+                <!-- Grade badge -->
+                <div class="flex items-center gap-3 shrink-0">
+                  <span
+                    v-if="scan.status === 'completed' && scan.score != null"
+                    class="text-xs font-display font-bold px-2.5 py-1 rounded-lg"
+                    :class="{
+                      'bg-score-good/10 text-score-good': scan.score >= 70,
+                      'bg-score-medium/10 text-score-medium': scan.score >= 40 && scan.score < 70,
+                      'bg-score-bad/10 text-score-bad': scan.score < 40,
+                    }"
+                  >
+                    {{ scan.grade }}
+                  </span>
+                  <span
+                    v-else-if="scan.status === 'running' || scan.status === 'pending'"
+                    class="text-[11px] font-display font-medium text-accent bg-accent/10 px-2 py-1 rounded-lg"
+                  >
+                    Scanning...
+                  </span>
+
+                  <!-- Delete button -->
+                  <button
+                    @click.prevent.stop="handleDeleteScan(scan.scan_id)"
+                    class="w-7 h-7 rounded-lg flex items-center justify-center text-warm-300 hover:text-score-bad hover:bg-score-bad/10 transition-colors opacity-0 group-hover:opacity-100"
+                    title="Delete scan"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+
+                  <!-- Arrow -->
+                  <svg class="w-4 h-4 text-warm-300 group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
               </router-link>
             </div>
           </section>
 
-          <!-- 7. UpgradeCard for free users -->
-          <section v-if="!isPro" class="mb-8 animate-slide-up" style="animation-delay: 120ms">
+          <!-- ============================================================ -->
+          <!-- UPGRADE CARD (free users, bottom)                            -->
+          <!-- ============================================================ -->
+          <section v-if="!isPro" class="mb-10 animate-slide-up" style="animation-delay: 160ms">
             <UpgradeCard />
           </section>
 

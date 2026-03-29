@@ -18,6 +18,7 @@ from db import (
     init_db,
     create_scan,
     get_scan,
+    delete_scan,
     count_scans_today,
     create_user,
     get_user_by_email,
@@ -646,6 +647,15 @@ async def domain_history(
 async def list_user_scans(user: dict = Depends(get_current_user)):
     scans = await get_user_scans(user["id"])
     return {"scans": scans}
+
+
+@app.delete("/api/scan/{scan_id}")
+async def delete_user_scan(scan_id: str, user: dict = Depends(get_current_user)):
+    """Delete a scan. Only the scan owner can delete it."""
+    deleted = await delete_scan(scan_id, user["id"])
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Scan not found or not yours.")
+    return {"status": "deleted"}
 
 
 # ---------------------------------------------------------------------------

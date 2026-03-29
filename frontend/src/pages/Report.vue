@@ -74,7 +74,7 @@ async function checkFixAccess() {
   checkingAccess.value = true
   try {
     const access = await getScanAccess(scanId)
-    hasFixAccess.value = !!access.has_access
+    hasFixAccess.value = !!(access.has_fix_access || access.has_access)
   } catch {
     hasFixAccess.value = false
   } finally {

@@ -858,7 +858,6 @@ class CrawlerPingRequest(BaseModel):
 
 @app.post("/api/crawler-ping")
 async def manual_crawler_ping(
-    body: CrawlerPingRequest,
     user: dict = Depends(get_current_user),
 ):
     """Manually ping AI crawlers and search engines about content updates. Pro only, max 3/day."""
@@ -869,8 +868,14 @@ async def manual_crawler_ping(
     if pings_today >= 3:
         raise HTTPException(status_code=429, detail="Maximum 3 manual pings per day.")
 
-    results = await ping_crawlers(user["id"], body.domain, manual=True)
-    return {"domain": body.domain, "results": results}
+    # Use domain from latest scan
+    scans = await get_user_scans(user["id"], limit=1)
+    if not scans:
+        raise HTTPException(status_code=400, detail="No scans found. Run a scan first.")
+    domain = scans[0]["domain"]
+
+    results = await ping_crawlers(user["id"], domain, manual=True)
+    return {"domain": domain, "results": results, "remaining_today": 2 - pings_today}
 
 
 @app.get("/api/crawler-ping/history")

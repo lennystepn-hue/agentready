@@ -2,18 +2,18 @@
 
 # AgentCheck
 
-### Is your online store visible to AI shopping agents?
+### Is your website visible to AI agents?
 
-**The open-source AI agent readiness scanner for e-commerce.**
+**The open-source AI agent readiness scanner for any website.**
 
 [Live Scanner](https://agentcheck.site) · [Report a Bug](https://github.com/lennystepn-hue/agentready/issues) · [Request Feature](https://github.com/lennystepn-hue/agentready/issues)
 
 ---
 
-ChatGPT, Claude, Gemini, and Perplexity are becoming how people discover and buy products.
-If your store isn't machine-readable, AI agents will recommend your competitors instead.
+ChatGPT, Claude, Gemini, and Perplexity are becoming how people discover businesses, products, and content.
+If your site isn't machine-readable, AI agents will recommend your competitors instead.
 
-**AgentCheck scans your e-commerce site and tells you exactly what to fix.**
+**AgentCheck scans any website and tells you exactly what to fix.**
 
 </div>
 
@@ -21,15 +21,15 @@ If your store isn't machine-readable, AI agents will recommend your competitors 
 
 ## The Problem
 
-AI shopping agents are reshaping e-commerce. By 2026, AI agents will drive **$20.9 billion** in retail spending ([Gartner, 2025](https://www.gartner.com)). But most online stores aren't ready:
+AI agents are reshaping how people discover and interact with businesses online. By 2026, AI agents will drive **$20.9 billion** in retail spending alone ([Gartner, 2025](https://www.gartner.com)). But most websites aren't ready:
 
-- No `llms.txt` or `ai.txt` — AI agents can't find basic store information
-- Missing or incomplete Schema.org markup — agents can't read product data
-- No UCP endpoint — no programmatic commerce capabilities
+- No `llms.txt` or `ai.txt` — AI agents can't find basic site information
+- Missing or incomplete Schema.org markup — agents can't read structured data
+- No UCP endpoint — no programmatic capabilities for AI agents
 - JavaScript-only rendering — agents see a blank page
-- No structured shipping, payment, or return data — agents can't complete purchases
+- No structured conversion paths — agents can't guide users effectively
 
-**The average e-commerce store scores below 30/100 on AI agent readiness.**
+**The average website scores below 30/100 on AI agent readiness.**
 
 AgentCheck runs **18+ automated checks** across 5 categories to surface exactly what's broken — and gives you copy-paste code to fix it.
 
@@ -40,9 +40,9 @@ AgentCheck runs **18+ automated checks** across 5 categories to surface exactly 
 | Category | Points | What It Measures |
 |----------|--------|-----------------|
 | **Protocol Readiness** | 20 | UCP endpoint, `ai.txt`, `llms.txt`, `robots.txt` AI bot rules |
-| **Structured Data Quality** | 25 | JSON-LD, Product/Offer Schema, Organization, Breadcrumbs |
+| **Structured Data Quality** | 25 | JSON-LD, site-type Schema (Product, Article, Restaurant, etc.), Organization, Breadcrumbs |
 | **Agent Accessibility** | 20 | TTFB, JavaScript dependency, API/feed availability, URL structure |
-| **Transaction Readiness** | 20 | Guest checkout, payment methods, shipping info, return policy |
+| **Conversion Readiness** | 20 | CTAs, contact forms, booking/checkout, site-type conversion signals |
 | **Trust Signals** | 15 | Aggregate ratings, HTTPS + security headers, contact info |
 
 Every check produces a **pass**, **warn**, or **fail** with a specific fix suggestion and code snippet.
@@ -52,15 +52,17 @@ Every check produces a **pass**, **warn**, or **fail** with a specific fix sugge
 ## How It Works
 
 ```
-1. Enter your store URL        →  agentcheck.site
-2. We run 18+ automated checks →  ~30 seconds
-3. Get your score + fix report →  0-100 score, letter grade, prioritized fixes
+1. Enter any website URL        →  agentcheck.site
+2. We auto-detect site type     →  e-commerce, blog, SaaS, restaurant, etc.
+3. We run 18+ automated checks  →  ~30 seconds
+4. Get your score + fix report  →  0-100 score, letter grade, prioritized fixes
 ```
 
 ### Example Output
 
 ```
-Domain:     example-shop.de
+Domain:     example-site.com
+Type:       E-Commerce (auto-detected)
 Score:      28 / 100
 Grade:      E
 
@@ -162,7 +164,7 @@ All endpoints are available at `https://agentcheck.site/api/`.
 ```bash
 curl -X POST https://agentcheck.site/api/scan \
   -H "Content-Type: application/json" \
-  -d '{"domain": "your-shop.com"}'
+  -d '{"domain": "your-website.com"}'
 ```
 
 Response:
@@ -170,7 +172,7 @@ Response:
 {
   "scan_id": "a1b2c3d4-...",
   "status": "pending",
-  "message": "Scan started for your-shop.com."
+  "message": "Scan started for your-website.com."
 }
 ```
 
@@ -199,11 +201,11 @@ When you purchase fix files for a scan, you receive a ZIP containing:
 
 | File | Description |
 |------|-------------|
-| `ai.txt` | AI agent instructions, tailored to your store |
-| `llms.txt` | LLM context file with your store's products and policies |
+| `ai.txt` | AI agent instructions, tailored to your site type |
+| `llms.txt` | LLM context file describing your site and its content |
 | `robots_txt_additions.txt` | Rules to add for GPTBot, ClaudeBot, PerplexityBot, etc. |
 | `ucp.json` | Universal Commerce Protocol endpoint configuration |
-| `schema_product.jsonld` | Product Schema template with your detected data |
+| `schema_*.jsonld` | Schema template matching your site type (Product, Article, Restaurant, etc.) |
 | `schema_organization.jsonld` | Organization Schema for your business |
 | `implementation_guide.md` | Step-by-step deploy guide (Shopify, WooCommerce, custom) |
 
@@ -223,9 +225,10 @@ agentready/
 │   ├── scanner/
 │   │   ├── orchestrator.py     # Scan coordination
 │   │   ├── protocol_checks.py  # UCP, ai.txt, llms.txt, robots.txt
-│   │   ├── schema_checks.py    # JSON-LD, Product, Offer, Org Schema
+│   │   ├── schema_checks.py    # JSON-LD, site-type Schema checks
+│   │   ├── site_detector.py    # Auto-detect website type
 │   │   ├── accessibility.py    # TTFB, JS dependency, API, URLs
-│   │   ├── transaction.py      # Checkout, payments, shipping, returns
+│   │   ├── transaction.py      # Conversion readiness (site-type-aware)
 │   │   ├── trust.py            # Ratings, security, contact
 │   │   ├── discovery.py        # Product page finder
 │   │   └── models.py           # Data models
@@ -284,11 +287,11 @@ The script installs Docker, builds containers, obtains SSL certificates, and sta
 
 ## Related Standards & Protocols
 
-AgentCheck evaluates compatibility with these emerging AI commerce standards:
+AgentCheck evaluates compatibility with these emerging AI standards:
 
 - **[llms.txt](https://llmstxt.org)** — Markdown files that help LLMs understand your site
 - **[ai.txt](https://ai-txt.org)** — AI agent instruction files (like robots.txt for AI)
-- **[Schema.org](https://schema.org)** — Structured data vocabulary for products, offers, organizations
+- **[Schema.org](https://schema.org)** — Structured data vocabulary for products, articles, businesses, and more
 - **[UCP (Universal Commerce Protocol)](https://www.ucprotocol.com)** — Programmatic commerce endpoint specification
 - **robots.txt AI directives** — Crawl rules for GPTBot, ClaudeBot, PerplexityBot, Google-Extended
 
@@ -320,13 +323,16 @@ cd ../frontend && npm run dev
 Yes. The scanner and reports are free forever. Tailored fix files and monitoring are paid.
 
 **How accurate is the score?**
-The score measures technical readiness signals that AI agents look for. It doesn't guarantee placement in AI responses, but stores with higher scores are significantly more likely to be found and recommended.
+The score measures technical readiness signals that AI agents look for. It doesn't guarantee placement in AI responses, but sites with higher scores are significantly more likely to be found and recommended.
 
 **Which AI agents does this cover?**
 ChatGPT (OpenAI), Claude (Anthropic), Gemini (Google), Perplexity, and any agent that follows standard web protocols.
 
 **Can I run this on my own server?**
 Yes. AgentCheck is MIT licensed and fully self-hostable. See the Self-Hosting section above.
+
+**What types of websites does this support?**
+AgentCheck auto-detects your site type and adjusts checks accordingly. Supported types include e-commerce, blogs/news, SaaS, restaurants, local businesses, professional services, and portfolios/agencies.
 
 **How is this different from regular SEO tools?**
 Traditional SEO tools optimize for search engine crawlers. AgentCheck optimizes for AI agents — which read structured data, API endpoints, and machine-readable files that search crawlers ignore.
@@ -335,7 +341,7 @@ Traditional SEO tools optimize for search engine crawlers. AgentCheck optimizes 
 
 ## Keywords
 
-`ai agent readiness` `ai seo` `ai commerce` `ai shopping agent` `ecommerce ai optimization` `llms.txt` `ai.txt` `schema.org checker` `structured data validator` `ai agent visibility` `chatgpt shopping` `claude shopping agent` `ai product discovery` `machine readable ecommerce` `ucp protocol` `agent commerce protocol` `ai bot optimization` `is my store reachable for ai` `ai search optimization` `ecommerce ai scanner`
+`ai agent readiness` `ai seo` `website ai readiness` `ai visibility for websites` `blog ai optimization` `saas ai optimization` `ecommerce ai optimization` `llms.txt` `ai.txt` `schema.org checker` `structured data validator` `ai agent visibility` `chatgpt` `claude` `ai product discovery` `machine readable website` `ucp protocol` `agent commerce protocol` `ai bot optimization` `is my site reachable for ai` `ai search optimization` `website ai scanner` `restaurant ai` `local business ai`
 
 ---
 

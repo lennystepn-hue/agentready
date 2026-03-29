@@ -32,13 +32,13 @@ const categories = [
     name: 'Protocol Readiness',
     points: '20 pts',
     checks: ['UCP Endpoint', 'ai.txt', 'llms.txt', 'robots.txt AI rules'],
-    desc: 'Can AI agents discover and connect to your shop through standard protocols?',
+    desc: 'Can AI agents discover and connect to your site through standard protocols?',
   },
   {
     name: 'Structured Data',
     points: '25 pts',
     checks: ['JSON-LD markup', 'Product Schema', 'Offer Schema', 'Organization', 'Breadcrumbs'],
-    desc: 'Is your product catalog described in machine-readable formats?',
+    desc: 'Is your content described in machine-readable formats?',
   },
   {
     name: 'Agent Accessibility',
@@ -47,10 +47,10 @@ const categories = [
     desc: 'Can agents navigate and read your site without a browser?',
   },
   {
-    name: 'Transaction Readiness',
+    name: 'Conversion Readiness',
     points: '20 pts',
-    checks: ['Guest checkout', 'Payment methods', 'Shipping info', 'Return policy'],
-    desc: 'Is your shop ready for programmatic purchasing?',
+    checks: ['CTAs & conversion paths', 'Contact forms', 'Booking / checkout', 'Site-type signals'],
+    desc: 'Is your site ready for AI-driven conversions?',
   },
   {
     name: 'Trust Signals',
@@ -79,7 +79,7 @@ const faqs = [
   },
   {
     q: 'Who is this for?',
-    a: 'E-commerce shop owners, SEO managers, and technical leads who want their products discoverable by AI shopping agents like ChatGPT, Perplexity, and Google Gemini.',
+    a: 'Website owners, SEO managers, and technical leads who want their content discoverable by AI agents like ChatGPT, Perplexity, and Google Gemini. Works for e-commerce, blogs, SaaS, restaurants, agencies, and more.',
   },
 ]
 
@@ -167,13 +167,13 @@ function toggleFaq(idx) {
 
             <h1 class="font-display text-[2.5rem] sm:text-[3.25rem] font-bold tracking-tight leading-[1.08] text-primary">
               How discoverable is<br class="hidden sm:block" />
-              your shop for<br class="hidden sm:block" />
+              your website for<br class="hidden sm:block" />
               AI&nbsp;Agents?
             </h1>
 
             <p class="mt-6 text-[17px] text-secondary leading-relaxed max-w-[52ch]">
-              AI agents are the new way people discover and buy products. If your
-              shop isn't machine-readable, AI assistants will recommend your
+              AI agents are the new way people discover businesses and content. If your
+              site isn't machine-readable, AI assistants will recommend your
               competitors instead. Scan your site, fix what's broken, and start
               getting found.
             </p>
@@ -186,7 +186,7 @@ function toggleFaq(idx) {
               <input
                 v-model="domain"
                 type="text"
-                placeholder="your-shop.com"
+                placeholder="your-website.com"
                 class="input-field flex-1"
                 :disabled="loading"
                 autocomplete="url"
@@ -212,7 +212,7 @@ function toggleFaq(idx) {
 
             <!-- AI Platform Logos — in hero -->
             <div class="mt-10 pt-8 border-t border-border-light">
-              <p class="text-[11px] text-warm-400 tracking-widest uppercase font-display mb-4">Make your shop visible to</p>
+              <p class="text-[11px] text-warm-400 tracking-widest uppercase font-display mb-4">Make your site visible to</p>
               <div class="flex items-center gap-7 flex-wrap">
                 <!-- OpenAI / ChatGPT -->
                 <div class="flex items-center gap-2 text-warm-500">
@@ -256,7 +256,7 @@ function toggleFaq(idx) {
                   <span class="font-display font-bold text-lg text-score-bad">28</span>
                 </div>
                 <div>
-                  <p class="font-display font-semibold text-sm text-primary">example-shop.de</p>
+                  <p class="font-display font-semibold text-sm text-primary">example-site.com</p>
                   <p class="text-xs text-muted">Grade E — needs work</p>
                 </div>
               </div>
@@ -275,7 +275,7 @@ function toggleFaq(idx) {
                   <div class="h-1 bg-warm-200 rounded-full"><div class="h-full bg-score-medium rounded-full" style="width: 55%"></div></div>
                 </div>
                 <div>
-                  <div class="flex justify-between text-[11px] mb-1"><span class="text-secondary">Transaction</span><span class="text-muted tabular-nums">2/20</span></div>
+                  <div class="flex justify-between text-[11px] mb-1"><span class="text-secondary">Conversion</span><span class="text-muted tabular-nums">2/20</span></div>
                   <div class="h-1 bg-warm-200 rounded-full"><div class="h-full bg-score-bad rounded-full" style="width: 10%"></div></div>
                 </div>
                 <div>
@@ -331,7 +331,7 @@ function toggleFaq(idx) {
           Don't just score — get found
         </h2>
         <p class="text-secondary mb-14 max-w-xl text-[15px] leading-relaxed">
-          With a Pro subscription, we don't just tell you what's broken. We help you fix it and continuously optimize your shop's AI visibility.
+          With a Pro subscription, we don't just tell you what's broken. We help you fix it and continuously optimize your site's AI visibility.
         </p>
 
         <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
@@ -346,7 +346,7 @@ function toggleFaq(idx) {
             <span class="inline-block font-display font-bold text-accent text-sm mb-2">02</span>
             <h3 class="font-display font-semibold text-primary mb-2">Monitor AI bot traffic</h3>
             <p class="text-sm text-secondary leading-relaxed">
-              Track which AI crawlers are visiting your shop — GPTBot, ClaudeBot, PerplexityBot, and more. Know when you start appearing in AI-powered shopping results.
+              Track which AI crawlers are visiting your site — GPTBot, ClaudeBot, PerplexityBot, and more. Know when you start appearing in AI-powered results.
             </p>
           </div>
           <div class="border-l-2 border-accent pl-5">
@@ -360,7 +360,7 @@ function toggleFaq(idx) {
             <span class="inline-block font-display font-bold text-accent text-sm mb-2">04</span>
             <h3 class="font-display font-semibold text-primary mb-2">AI Discovery Test</h3>
             <p class="text-sm text-secondary leading-relaxed">
-              We query ChatGPT, Claude, and Perplexity with real shopping queries to check if your store actually appears in AI responses. See exactly where you're found — and where you're not.
+              We query ChatGPT, Claude, and Perplexity with real queries to check if your site actually appears in AI responses. See exactly where you're found — and where you're not.
             </p>
           </div>
         </div>
@@ -380,14 +380,14 @@ function toggleFaq(idx) {
             <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-accent text-white font-display font-bold text-sm mb-4">1</span>
             <h3 class="font-display font-semibold text-primary mb-2">Enter your domain</h3>
             <p class="text-sm text-secondary leading-relaxed">
-              Paste any e-commerce URL. We detect the homepage and start analyzing automatically.
+              Paste any website URL. We auto-detect your site type and start analyzing automatically.
             </p>
           </div>
           <div>
             <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-accent text-white font-display font-bold text-sm mb-4">2</span>
             <h3 class="font-display font-semibold text-primary mb-2">We run 18+ checks</h3>
             <p class="text-sm text-secondary leading-relaxed">
-              Our scanner evaluates protocols, structured data, accessibility, transaction readiness, and trust signals in real time.
+              Our scanner evaluates protocols, structured data, accessibility, conversion readiness, and trust signals in real time.
             </p>
           </div>
           <div>
@@ -409,7 +409,7 @@ function toggleFaq(idx) {
           Five categories, scored out of 100
         </h2>
         <p class="text-secondary mb-12 max-w-lg text-[15px] leading-relaxed">
-          Each category measures a different dimension of how well AI agents can interact with your shop.
+          Each category measures a different dimension of how well AI agents can interact with your site.
         </p>
 
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
@@ -439,12 +439,12 @@ function toggleFaq(idx) {
         <div class="grid sm:grid-cols-[1fr,1px,1fr] gap-10 sm:gap-12 items-start">
           <div>
             <h2 class="font-display text-xl font-bold tracking-tight mb-3">
-              Most shops aren't ready
+              Most websites aren't ready
             </h2>
             <p class="text-sm text-secondary leading-relaxed">
-              Our scans show the majority of online shops score below 30 out of 100.
-              That means AI assistants can't reliably find their products, parse their
-              catalog, or complete purchases — so they recommend competitors instead.
+              Our scans show the majority of websites score below 30 out of 100.
+              That means AI assistants can't reliably find their content, parse their
+              data, or guide users to convert — so they recommend competitors instead.
             </p>
           </div>
           <div class="hidden sm:block bg-border-light"></div>
@@ -458,7 +458,7 @@ function toggleFaq(idx) {
               — Gartner Research, 2025
             </footer>
             <p class="mt-5 text-sm text-secondary leading-relaxed border-t border-border-light pt-4">
-              Early data suggests shops that implement AI agent readiness measures see up to 3x more referral traffic from AI assistants within 90 days.
+              Early data suggests sites that implement AI agent readiness measures see up to 3x more referral traffic from AI assistants within 90 days.
             </p>
           </blockquote>
         </div>
@@ -503,7 +503,7 @@ function toggleFaq(idx) {
     <section class="py-20 px-6 lg:px-8 border-t border-border-light">
       <div class="max-w-5xl mx-auto text-center">
         <h2 class="font-display text-2xl sm:text-3xl font-bold tracking-tight mb-3">
-          Check your shop now
+          Check your site now
         </h2>
         <p class="text-secondary mb-8 max-w-md mx-auto">
           Find out where you stand and what to improve. Free, no signup.
@@ -515,7 +515,7 @@ function toggleFaq(idx) {
           <input
             v-model="domainBottom"
             type="text"
-            placeholder="your-shop.com"
+            placeholder="your-website.com"
             class="input-field flex-1"
             :disabled="loading"
             autocomplete="url"

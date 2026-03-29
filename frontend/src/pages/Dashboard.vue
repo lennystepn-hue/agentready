@@ -229,7 +229,7 @@ onMounted(async () => {
 
           <div v-else-if="scans.length === 0" class="border border-dashed border-border rounded-lg p-10 text-center">
             <p class="font-display font-semibold text-primary mb-1">No scans yet</p>
-            <p class="text-sm text-secondary mb-4">Run your first scan to see how your shop performs.</p>
+            <p class="text-sm text-secondary mb-4">Run your first scan to see how your site performs.</p>
             <router-link to="/" class="btn-primary">Run a scan</router-link>
           </div>
 

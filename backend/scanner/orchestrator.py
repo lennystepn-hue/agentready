@@ -9,6 +9,7 @@ from scanner.protocol_checks import run_protocol_checks
 from scanner.schema_checks import run_schema_checks, extract_jsonld, _flatten_graph
 from scanner.accessibility import run_accessibility_checks
 from scanner.transaction import run_transaction_checks
+from scanner.site_detector import detect_site_type
 from scanner.trust import run_trust_checks
 from scanner.discovery import find_product_pages
 from db import update_scan_result
@@ -84,8 +85,13 @@ async def _execute_scan(scan_id: str, domain: str) -> None:
             raw_schemas = extract_jsonld(homepage_html)
             schemas = _flatten_graph(raw_schemas)
 
+            # 2b. Detect site type
+            site_info = detect_site_type(homepage_html, schemas)
+            site_type = site_info["type"]
+            logger.info(f"Scan {scan_id}: detected site type '{site_info['label']}' ({site_info['confidence']:.0%})")
+
             # 3. Schema checks on homepage
-            schema_results = run_schema_checks(homepage_html)
+            schema_results = run_schema_checks(homepage_html, site_type=site_type)
             all_checks.extend(schema_results)
 
             # 4. Discover product pages and analyze them
@@ -101,7 +107,7 @@ async def _execute_scan(scan_id: str, domain: str) -> None:
                     schemas.extend(page_schemas)
 
                     # If homepage had no Product schema, check product pages
-                    page_schema_results = run_schema_checks(resp.text)
+                    page_schema_results = run_schema_checks(resp.text, site_type=site_type)
                     # Replace FAIL results with better results from product pages
                     for new_check in page_schema_results:
                         for i, existing in enumerate(all_checks):
@@ -121,8 +127,8 @@ async def _execute_scan(scan_id: str, domain: str) -> None:
             )
             all_checks.extend(accessibility_results)
 
-            # 6. Transaction checks
-            transaction_results = run_transaction_checks(homepage_html, schemas)
+            # 6. Conversion readiness checks (site-type-aware)
+            transaction_results = run_transaction_checks(homepage_html, schemas, site_type=site_type)
             all_checks.extend(transaction_results)
 
             # 7. Trust checks
@@ -166,6 +172,8 @@ async def _execute_scan(scan_id: str, domain: str) -> None:
                 categories=categories,
                 checks=all_checks,
                 top_fixes=top_fixes,
+                site_type=site_info["type"],
+                site_label=site_info["label"],
             )
 
             await update_scan_result(

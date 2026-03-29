@@ -129,11 +129,11 @@ function toggleCategory(key) {
 }
 
 const categoryDescriptions = {
-  'Protocol Readiness': 'Whether AI agents can discover and connect to your shop through standard protocols like llms.txt, ai.txt, and robots.txt directives.',
-  'Structured Data Quality': 'How well your product catalog is described in machine-readable formats like Schema.org, JSON-LD, and data feeds.',
+  'Protocol Readiness': 'Whether AI agents can discover and connect to your site through standard protocols like llms.txt, ai.txt, and robots.txt directives.',
+  'Structured Data Quality': 'How well your content is described in machine-readable formats like Schema.org, JSON-LD, and data feeds.',
   'Agent Accessibility': 'Whether agents can navigate your site, access content without JavaScript, and use clean API endpoints.',
-  'Transaction Readiness': 'How prepared your shop is for programmatic purchasing — cart APIs, checkout flows, and order support.',
-  'Trust Signals': 'Security and credibility indicators that agents evaluate before recommending a shop to users.',
+  'Conversion Readiness': 'How prepared your site is for AI-driven conversions — CTAs, contact forms, booking, and conversion paths.',
+  'Trust Signals': 'Security and credibility indicators that agents evaluate before recommending your site to users.',
 }
 
 const categories = computed(() => {
@@ -156,11 +156,11 @@ const topFixes = computed(() => {
 const summaryLine = computed(() => {
   if (!scan.value) return ''
   const s = scan.value.score
-  if (s >= 80) return 'Your shop is well-prepared for AI agent discovery and interaction.'
-  if (s >= 60) return 'Your shop has a solid foundation but several areas need attention for full AI agent readiness.'
-  if (s >= 40) return 'Your shop has significant room for improvement in AI agent readiness.'
-  if (s >= 20) return 'AI agents will have difficulty finding and interacting with your shop. There are critical gaps to address.'
-  return 'Your shop is largely invisible to AI agents. Immediate action is needed across all areas.'
+  if (s >= 80) return 'Your site is well-prepared for AI agent discovery and interaction.'
+  if (s >= 60) return 'Your site has a solid foundation but several areas need attention for full AI agent readiness.'
+  if (s >= 40) return 'Your site has significant room for improvement in AI agent readiness.'
+  if (s >= 20) return 'AI agents will have difficulty finding and interacting with your site. There are critical gaps to address.'
+  return 'Your site is largely invisible to AI agents. Immediate action is needed across all areas.'
 })
 
 const scanDate = computed(() => {
@@ -301,7 +301,10 @@ onMounted(fetchReport)
             <!-- Domain + summary -->
             <div class="min-w-0">
               <p class="section-label mb-1">Report for</p>
-              <h1 class="font-display text-2xl font-bold tracking-tight text-primary mb-2 truncate">{{ scan.domain }}</h1>
+              <div class="flex items-center gap-2 mb-2">
+                <h1 class="font-display text-2xl font-bold tracking-tight text-primary truncate">{{ scan.domain }}</h1>
+                <span v-if="scan.site_label" class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-display font-bold uppercase tracking-wider bg-accent/10 text-accent flex-shrink-0">{{ scan.site_label }}</span>
+              </div>
               <p class="text-sm text-secondary leading-relaxed prose-body">{{ summaryLine }}</p>
               <p class="text-xs text-muted mt-2">Scanned {{ scanDate }}</p>
             </div>
@@ -448,13 +451,13 @@ onMounted(fetchReport)
             <h2 class="font-display text-lg font-bold tracking-tight">AI Discovery Test</h2>
             <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-display font-bold uppercase tracking-wider bg-accent/10 text-accent">Beta</span>
           </div>
-          <p class="text-sm text-secondary mb-5">We query real AI assistants to check if they know about your store.</p>
+          <p class="text-sm text-secondary mb-5">We query real AI assistants to check if they know about your site.</p>
 
           <!-- Pro user: can run the test -->
           <template v-if="isPro">
             <!-- Not run yet -->
             <div v-if="!discoveryResult && !discoveryLoading && !discoveryError" class="border border-border rounded-lg p-6 bg-surface">
-              <p class="text-sm text-secondary mb-4">Run a discovery test to see if AI agents like ChatGPT, Claude, and Perplexity mention your store when asked shopping-related questions.</p>
+              <p class="text-sm text-secondary mb-4">Run a discovery test to see if AI agents like ChatGPT, Claude, and Perplexity mention your site when asked relevant questions.</p>
               <button @click="handleRunDiscovery" class="btn-primary">
                 Run discovery test
               </button>
@@ -541,7 +544,7 @@ onMounted(fetchReport)
           <template v-else>
             <div class="border border-accent/20 rounded-lg p-6 bg-accent/[0.03]">
               <p class="text-sm text-secondary mb-2">
-                With the AI Discovery Test, we query ChatGPT, Claude, and Perplexity with real shopping queries and check if your store actually appears in the responses. See exactly where you are found and where you are not.
+                With the AI Discovery Test, we query ChatGPT, Claude, and Perplexity with real queries and check if your site actually appears in the responses. See exactly where you are found and where you are not.
               </p>
               <p class="text-xs text-muted mb-4">Available on the Pro plan.</p>
               <router-link to="/pricing" class="btn-primary text-sm">Upgrade to Pro</router-link>

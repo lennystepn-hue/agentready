@@ -44,6 +44,8 @@ class ScanReport:
     categories: dict
     checks: list[CheckResult]
     top_fixes: list[CheckResult] = field(default_factory=list)
+    site_type: str = "generic"
+    site_label: str = "Website"
 
     def to_dict(self) -> dict:
         return {
@@ -56,6 +58,8 @@ class ScanReport:
             "categories": self.categories,
             "checks": [c.to_dict() for c in self.checks],
             "top_fixes": [c.to_dict() for c in self.top_fixes],
+            "site_type": self.site_type,
+            "site_label": self.site_label,
         }
 
 

@@ -90,7 +90,7 @@ onMounted(fetchData)
         <div class="mb-10 animate-fade-in">
           <h1 class="font-display text-2xl font-bold tracking-tight mb-2">Your AgentCheck badge</h1>
           <p class="text-secondary text-sm leading-relaxed prose-body">
-            Show visitors and partners that your shop has been evaluated for AI agent
+            Show visitors and partners that your site has been evaluated for AI agent
             compatibility. Embed the badge on your website, in your README, or in documentation.
           </p>
         </div>

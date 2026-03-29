@@ -17,7 +17,7 @@ const categories = [
   { key: 'Protocol Readiness', label: 'Protocol Readiness' },
   { key: 'Structured Data Quality', label: 'Structured Data Quality' },
   { key: 'Agent Accessibility', label: 'Agent Accessibility' },
-  { key: 'Transaction Readiness', label: 'Transaction Readiness' },
+  { key: 'Conversion Readiness', label: 'Conversion Readiness' },
   { key: 'Trust Signals', label: 'Trust Signals' },
 ]
 

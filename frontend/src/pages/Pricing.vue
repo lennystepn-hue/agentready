@@ -104,7 +104,7 @@ async function handlePro() {
           Free scanning. Paid fixes when you need them.
         </h1>
         <p class="mt-4 text-[16px] text-secondary leading-relaxed max-w-[56ch]">
-          Every shop gets a full scan, score, and report at no cost.
+          Every website gets a full scan, score, and report at no cost.
           When you're ready to act on the results, Fix Files gives you
           everything your dev team needs to implement changes.
         </p>
@@ -191,7 +191,7 @@ async function handlePro() {
                 <!-- Tailored fix files -->
                 <tr class="border-b border-border-light">
                   <td class="px-5 py-3">
-                    <span class="font-display text-primary">Tailored fix files for your shop</span>
+                    <span class="font-display text-primary">Tailored fix files for your site</span>
                     <span class="block text-xs text-muted mt-0.5">ai.txt, llms.txt, robots.txt rules, UCP config</span>
                   </td>
                   <td class="px-5 py-3">
@@ -206,7 +206,7 @@ async function handlePro() {
                 </tr>
                 <!-- Product & Organization Schema templates -->
                 <tr class="border-b border-border-light">
-                  <td class="px-5 py-3 font-display text-primary">Product & Organization Schema templates</td>
+                  <td class="px-5 py-3 font-display text-primary">Schema.org templates (auto-detected type)</td>
                   <td class="px-5 py-3">
                     <svg class="w-4 h-4 text-warm-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18 12H6" /></svg>
                   </td>
@@ -407,7 +407,7 @@ async function handlePro() {
               </li>
               <li class="flex items-start gap-2.5">
                 <svg class="w-4 h-4 text-score-good flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
-                Product & Organization Schema templates
+                Schema.org templates (auto-detected type)
               </li>
               <li class="flex items-start gap-2.5">
                 <svg class="w-4 h-4 text-score-good flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>

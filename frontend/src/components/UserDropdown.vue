@@ -36,8 +36,9 @@ function navigate(path) {
 async function handleBilling() {
   close()
   try {
-    const { url } = await createBillingPortal()
-    window.location.href = url
+    const data = await createBillingPortal()
+    const url = data.portal_url || data.url
+    if (url) window.location.href = url
   } catch {
     // Billing portal error handled silently
   }

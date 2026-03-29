@@ -1,14 +1,25 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { isLoggedIn } from '../auth.js'
+import { isLoggedIn, isPro } from '../auth.js'
 import AppHeader from '../components/AppHeader.vue'
-import { createCheckoutSession } from '../api.js'
+import { createCheckoutSession, createBillingPortal } from '../api.js'
 
 const router = useRouter()
 const purchasingFix = ref(false)
 const purchasingPro = ref(false)
 const error = ref('')
+
+async function handleManageBilling() {
+  try {
+    const data = await createBillingPortal()
+    const url = data.portal_url || data.url
+    if (url) window.location.href = url
+  } catch {
+    // If no Stripe customer (manual Pro), show a message
+    error.value = 'Billing portal not available. Contact support to manage your subscription.'
+  }
+}
 
 async function handleFixFiles() {
   if (!isLoggedIn.value) {
@@ -66,6 +77,24 @@ async function handlePro() {
         <p class="mt-4 text-[16px] text-secondary leading-relaxed max-w-[56ch]">
           Free scan tells you where you stand. Pro makes AI agents find and recommend your site.
         </p>
+
+        <!-- Current plan for logged-in users -->
+        <div v-if="isLoggedIn" class="mt-6 inline-flex items-center gap-3 border border-border-light rounded-lg px-4 py-2.5 bg-surface">
+          <span class="text-sm text-secondary">Your plan:</span>
+          <span
+            class="inline-flex items-center px-2.5 py-1 rounded text-xs font-display font-bold uppercase tracking-wider"
+            :class="isPro ? 'bg-accent text-white' : 'bg-warm-200 text-warm-600'"
+          >
+            {{ isPro ? 'Pro — $29/mo' : 'Free' }}
+          </span>
+          <button
+            v-if="isPro"
+            @click="handleManageBilling"
+            class="text-xs text-accent hover:text-accent-hover transition-colors font-display font-medium"
+          >
+            Manage subscription →
+          </button>
+        </div>
       </div>
     </section>
 

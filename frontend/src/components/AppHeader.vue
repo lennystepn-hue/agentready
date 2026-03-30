@@ -79,7 +79,7 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
       </div>
 
       <!-- Right: compact group -->
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-4 shrink-0">
         <router-link to="/pricing" class="hidden sm:block text-[13px] text-secondary hover:text-primary transition-colors">
           Pricing
         </router-link>

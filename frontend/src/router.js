@@ -75,6 +75,11 @@ const routes = [
     name: 'Imprint',
     component: () => import('./pages/Imprint.vue'),
   },
+  {
+    path: '/tools/llms-txt-generator',
+    name: 'LlmsTxtGenerator',
+    component: () => import('./pages/LlmsTxtGenerator.vue'),
+  },
 ]
 
 const router = createRouter({

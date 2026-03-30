@@ -1,13 +1,15 @@
 import io
 import json
 import re
+import time
 import uuid
 import logging
+from collections import defaultdict
 from dotenv import load_dotenv
 load_dotenv()
 import zipfile
 from contextlib import asynccontextmanager
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -1063,6 +1065,248 @@ async def simulate_agent(scan_id: str, user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=500, detail=result["error"])
 
     return result
+
+
+# ---------------------------------------------------------------------------
+# LLMs.txt Generator (public tool)
+# ---------------------------------------------------------------------------
+
+class GenerateLlmsTxtRequest(BaseModel):
+    domain: str
+
+    @field_validator("domain")
+    @classmethod
+    def validate_domain(cls, v: str) -> str:
+        v = v.strip().lower()
+        if "://" in v:
+            parsed = urlparse(v)
+            v = parsed.netloc or parsed.path
+        v = v.split("/")[0]
+        host = v.split(":")[0]
+        if not host or "." not in host:
+            raise ValueError("Invalid domain. Provide a valid domain like 'example.com'.")
+        if len(host) > 253:
+            raise ValueError("Domain too long.")
+        return v
+
+
+# Simple in-memory rate limiter: IP -> list of timestamps
+_llms_txt_rate: dict[str, list[float]] = defaultdict(list)
+_LLMS_TXT_RATE_LIMIT = 10  # requests per hour
+_LLMS_TXT_RATE_WINDOW = 3600  # 1 hour in seconds
+
+
+def _check_llms_txt_rate_limit(ip: str) -> bool:
+    """Return True if the request is allowed, False if rate-limited."""
+    now = time.time()
+    timestamps = _llms_txt_rate[ip]
+    # Prune old entries
+    _llms_txt_rate[ip] = [t for t in timestamps if now - t < _LLMS_TXT_RATE_WINDOW]
+    if len(_llms_txt_rate[ip]) >= _LLMS_TXT_RATE_LIMIT:
+        return False
+    _llms_txt_rate[ip].append(now)
+    return True
+
+
+@app.post("/api/tools/generate-llms-txt")
+async def generate_llms_txt(body: GenerateLlmsTxtRequest, request: Request):
+    """Generate an llms.txt file for a domain by analysing its homepage."""
+    import httpx
+    from bs4 import BeautifulSoup
+
+    ip_address = request.client.host if request.client else "unknown"
+    if not _check_llms_txt_rate_limit(ip_address):
+        raise HTTPException(
+            status_code=429,
+            detail="Rate limit exceeded. Maximum 10 requests per hour.",
+        )
+
+    domain = body.domain
+    url = f"https://{domain}"
+
+    # --- Fetch homepage ---
+    user_agent = (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+    )
+    try:
+        async with httpx.AsyncClient(
+            timeout=10,
+            follow_redirects=True,
+            headers={"User-Agent": user_agent},
+        ) as client:
+            resp = await client.get(url)
+            resp.raise_for_status()
+            html = resp.text
+    except httpx.TimeoutException:
+        raise HTTPException(
+            status_code=408,
+            detail=f"Timeout: {domain} did not respond within 10 seconds.",
+        )
+    except (httpx.RequestError, httpx.HTTPStatusError) as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Could not fetch {domain}: {str(exc)[:200]}",
+        )
+
+    # --- Parse homepage ---
+    soup = BeautifulSoup(html, "lxml")
+
+    # Title
+    title_tag = soup.find("title")
+    title = title_tag.get_text(strip=True) if title_tag else domain
+
+    # Meta description
+    meta_desc_tag = soup.find("meta", attrs={"name": "description"})
+    description = meta_desc_tag["content"].strip() if meta_desc_tag and meta_desc_tag.get("content") else ""
+
+    # OG tags
+    og_tags: dict[str, str] = {}
+    for prop in ("og:title", "og:description", "og:type", "og:site_name"):
+        tag = soup.find("meta", attrs={"property": prop})
+        if tag and tag.get("content"):
+            og_tags[prop] = tag["content"].strip()
+
+    # Language
+    html_tag = soup.find("html")
+    language = html_tag.get("lang", "").strip() if html_tag else ""
+
+    # Site name: prefer og:site_name > og:title > <title>
+    site_name = og_tags.get("og:site_name") or og_tags.get("og:title") or title
+
+    # Best description: prefer og:description > meta description
+    best_description = og_tags.get("og:description") or description or ""
+
+    # --- Navigation links (first 15) ---
+    nav_links: list[dict[str, str]] = []
+    seen_hrefs: set[str] = set()
+
+    # Try <nav> elements first, then header links
+    nav_elements = soup.find_all("nav")
+    if not nav_elements:
+        nav_elements = soup.find_all("header")
+
+    for nav_el in nav_elements:
+        for a_tag in nav_el.find_all("a", href=True):
+            href = a_tag["href"].strip()
+            text = a_tag.get_text(strip=True)
+            if not text or not href or href.startswith("#") or href.startswith("javascript:"):
+                continue
+            full_url = urljoin(url, href)
+            if full_url not in seen_hrefs:
+                seen_hrefs.add(full_url)
+                nav_links.append({"text": text, "url": full_url})
+            if len(nav_links) >= 15:
+                break
+        if len(nav_links) >= 15:
+            break
+
+    # --- Site type hints ---
+    html_lower = html.lower()
+    site_type = "website"
+    ecommerce_signals = ["add to cart", "add-to-cart", "shopify", "woocommerce", "product-price", "cart-icon", "/cart", "buy now"]
+    blog_signals = ["blog", "article", "post-content", "entry-content", "wordpress"]
+    saas_signals = ["pricing", "sign up", "free trial", "get started", "dashboard", "api"]
+    docs_signals = ["documentation", "docs", "api reference", "developer"]
+
+    if any(s in html_lower for s in ecommerce_signals):
+        site_type = "e-commerce"
+    elif any(s in html_lower for s in saas_signals):
+        site_type = "saas"
+    elif any(s in html_lower for s in blog_signals):
+        site_type = "blog"
+    elif any(s in html_lower for s in docs_signals):
+        site_type = "documentation"
+
+    # --- Contact info ---
+    contact_emails: list[str] = []
+    for mailto in soup.find_all("a", href=re.compile(r"^mailto:", re.I)):
+        email = mailto["href"].replace("mailto:", "").split("?")[0].strip()
+        if email and email not in contact_emails:
+            contact_emails.append(email)
+    contact_phones: list[str] = []
+    for tel in soup.find_all("a", href=re.compile(r"^tel:", re.I)):
+        phone = tel["href"].replace("tel:", "").strip()
+        if phone and phone not in contact_phones:
+            contact_phones.append(phone)
+
+    # --- Key pages ---
+    key_page_keywords = {
+        "about": ["about", "about-us", "about us"],
+        "pricing": ["pricing", "plans", "price"],
+        "contact": ["contact", "contact-us", "contact us"],
+        "docs": ["docs", "documentation", "developers", "api"],
+        "blog": ["blog", "news", "articles"],
+    }
+    key_pages: dict[str, str] = {}
+    for a_tag in soup.find_all("a", href=True):
+        href = a_tag["href"].strip().lower()
+        text = a_tag.get_text(strip=True).lower()
+        for page_name, keywords in key_page_keywords.items():
+            if page_name not in key_pages:
+                if any(kw in href or kw in text for kw in keywords):
+                    key_pages[page_name] = urljoin(url, a_tag["href"].strip())
+
+    # --- Generate llms.txt ---
+    lines: list[str] = []
+    lines.append(f"# {site_name}")
+    lines.append("")
+
+    if best_description:
+        lines.append(f"> {best_description}")
+        lines.append("")
+
+    # About section
+    about_text = best_description
+    if og_tags.get("og:type"):
+        about_text += f" (Type: {og_tags['og:type']})"
+    if language:
+        about_text += f" Language: {language}."
+    if about_text:
+        lines.append("## About")
+        lines.append("")
+        lines.append(about_text.strip())
+        lines.append("")
+
+    # Features / Services from nav links
+    if nav_links:
+        lines.append("## Features / Services")
+        lines.append("")
+        for link in nav_links:
+            lines.append(f"- [{link['text']}]({link['url']})")
+        lines.append("")
+
+    # Links
+    lines.append("## Links")
+    lines.append("")
+    lines.append(f"- [Homepage]({url})")
+    for page_name, page_url in key_pages.items():
+        lines.append(f"- [{page_name.capitalize()}]({page_url})")
+    lines.append("")
+
+    # Contact
+    if contact_emails or contact_phones:
+        lines.append("## Contact")
+        lines.append("")
+        for email in contact_emails:
+            lines.append(f"- Email: {email}")
+        for phone in contact_phones:
+            lines.append(f"- Phone: {phone}")
+        lines.append("")
+
+    llms_txt = "\n".join(lines).strip() + "\n"
+
+    return {
+        "domain": domain,
+        "llms_txt": llms_txt,
+        "site_info": {
+            "title": title,
+            "description": best_description,
+            "language": language,
+            "site_type": site_type,
+            "pages_found": len(key_pages),
+        },
+    }
 
 
 if __name__ == "__main__":

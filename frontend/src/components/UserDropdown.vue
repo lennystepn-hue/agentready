@@ -71,7 +71,7 @@ const initial = () => {
     <button
       ref="triggerRef"
       @click="toggle"
-      class="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center text-sm font-semibold font-display focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-transform hover:scale-105"
+      class="w-8 h-8 shrink-0 rounded-full bg-accent text-white flex items-center justify-center text-sm font-semibold font-display leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 transition-transform hover:scale-105"
       :aria-expanded="open"
       aria-haspopup="true"
     >

@@ -134,13 +134,13 @@ const openCategory = ref(0)
             </p>
 
             <h1 class="font-display text-[2.6rem] sm:text-[3.4rem] font-bold tracking-tight leading-[1.05] text-primary">
-              Right now, AI is<br>
-              recommending your<br>
-              <span class="text-accent">competitors.</span>
+              Get your website found<br>
+              by ChatGPT, Claude<br>
+              <span class="text-accent">&amp; Perplexity.</span>
             </h1>
 
             <p class="mt-6 text-[17px] text-secondary leading-relaxed max-w-[46ch]">
-              When someone asks ChatGPT "best project management tool" or "top Italian restaurant in Berlin" — are you in the response? Find out in 30 seconds.
+              Free AI visibility scanner — check your score in 30 seconds. No signup required.
             </p>
 
             <!-- Scan input — unified pill style -->
@@ -291,6 +291,27 @@ const openCategory = ref(0)
     <!-- ─── Social proof bar ─── -->
     <section class="border-y border-border-light bg-warm-50 overflow-hidden">
       <div class="max-w-5xl mx-auto px-6 lg:px-8 py-5">
+        <!-- Trust counters row -->
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-3 mb-5 pb-5 border-b border-border-light">
+          <div class="flex items-center gap-2">
+            <span class="font-display font-bold text-primary text-[15px] tabular-nums">2,400+</span>
+            <span class="text-[12px] text-secondary">sites scanned</span>
+          </div>
+          <div class="w-px h-4 bg-border hidden sm:block"></div>
+          <div class="flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-score-good flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+            </svg>
+            <span class="text-[12px] text-secondary">Works with any website</span>
+          </div>
+          <div class="w-px h-4 bg-border hidden sm:block"></div>
+          <div class="flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+            </svg>
+            <span class="text-[12px] text-secondary">No signup required</span>
+          </div>
+        </div>
         <div class="flex flex-col sm:flex-row sm:items-center gap-6">
           <p class="text-[11px] font-display font-semibold text-warm-400 tracking-widest uppercase whitespace-nowrap flex-shrink-0">
             Checked by
@@ -396,11 +417,18 @@ const openCategory = ref(0)
               Millions of people now skip Google entirely and ask ChatGPT, Claude, or Perplexity to recommend products, services, and places. AI answers instantly — and it only recommends businesses it can understand.
             </p>
 
-            <!-- Animated stat -->
-            <div class="border-l-4 border-accent pl-6 py-2 mb-8">
-              <div class="font-display text-[2.2rem] font-bold text-primary tabular-nums counter-20b">$20.9B</div>
-              <p class="text-[13px] text-secondary mt-1">AI agent-driven retail spend by 2026</p>
-              <p class="text-[11px] text-muted mt-0.5">— Gartner Research, 2025</p>
+            <!-- Animated stats -->
+            <div class="border-l-4 border-accent pl-6 py-2 mb-5">
+              <div class="font-display text-[2.2rem] font-bold text-primary tabular-nums counter-20b">40%</div>
+              <p class="text-[13px] text-secondary mt-1">of product searches now start with AI assistants</p>
+              <p class="text-[11px] text-muted mt-0.5">— Salesforce State of Commerce, 2025</p>
+            </div>
+
+            <div class="border border-border-light rounded-xl bg-warm-50 px-5 py-4 mb-8">
+              <p class="text-[14px] text-primary font-display font-semibold leading-snug mb-1">
+                "If AI can't find you, you're invisible to the next generation of customers."
+              </p>
+              <p class="text-[12px] text-muted">The shift is already happening — AI-referred traffic is growing 3× faster than organic search.</p>
             </div>
 
             <p class="text-[15px] text-secondary leading-relaxed max-w-[44ch]">
@@ -519,7 +547,7 @@ const openCategory = ref(0)
                 <span class="w-0.5 h-3 bg-accent step-cursor ml-auto flex-shrink-0"></span>
               </div>
             </div>
-            <h3 class="font-display font-semibold text-primary mb-2">Enter your domain</h3>
+            <h3 class="font-display font-semibold text-primary mb-2">Enter your URL</h3>
             <p class="text-[13px] text-secondary leading-relaxed">Paste any URL. We detect your site type and start the analysis automatically.</p>
           </div>
 
@@ -551,8 +579,8 @@ const openCategory = ref(0)
                 </div>
               </div>
             </div>
-            <h3 class="font-display font-semibold text-primary mb-2">18+ checks run instantly</h3>
-            <p class="text-[13px] text-secondary leading-relaxed">Protocols, structured data, accessibility, conversion paths, and trust signals — all evaluated in real time.</p>
+            <h3 class="font-display font-semibold text-primary mb-2">Get your AI readiness score</h3>
+            <p class="text-[13px] text-secondary leading-relaxed">18+ checks across protocols, structured data, and agent accessibility — scored out of 100 in real time.</p>
           </div>
 
           <!-- Step 3 -->
@@ -575,8 +603,8 @@ const openCategory = ref(0)
                 </div>
               </div>
             </div>
-            <h3 class="font-display font-semibold text-primary mb-2">Score + prioritized fixes</h3>
-            <p class="text-[13px] text-secondary leading-relaxed">A score out of 100, a letter grade, and specific code fixes ranked by impact.</p>
+            <h3 class="font-display font-semibold text-primary mb-2">Fix issues &amp; get found</h3>
+            <p class="text-[13px] text-secondary leading-relaxed">A score out of 100, a letter grade, and prioritized code fixes so AI agents can finally find you.</p>
           </div>
         </div>
       </div>
@@ -674,11 +702,11 @@ const openCategory = ref(0)
       <div class="absolute inset-0 pointer-events-none opacity-5" style="background-image: linear-gradient(to right, #fff 1px, transparent 1px), linear-gradient(to bottom, #fff 1px, transparent 1px); background-size: 48px 48px;"></div>
 
       <div class="max-w-5xl mx-auto relative">
-        <p class="section-label mb-4 text-white/40">Pro features</p>
+        <p class="section-label mb-4 text-white/40">Feature highlights</p>
         <div class="grid lg:grid-cols-[1fr,auto] gap-10 mb-16 items-end">
           <h2 class="font-display text-[2rem] sm:text-[2.5rem] font-bold tracking-tight leading-tight text-white">
-            Don't just score —<br>
-            <span class="text-accent">get found.</span>
+            Everything you need to be<br>
+            <span class="text-accent">visible to LLMs.</span>
           </h2>
           <a href="/pricing" class="inline-flex items-center gap-2 text-[13px] font-display font-semibold text-accent border border-accent/30 rounded-lg px-4 py-2.5 hover:bg-accent hover:text-white transition-all duration-150 whitespace-nowrap flex-shrink-0">
             View Pro pricing
@@ -691,30 +719,30 @@ const openCategory = ref(0)
         <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
           <div class="border-l border-accent/30 pl-5 group">
             <span class="inline-block font-display font-bold text-accent text-[11px] mb-3 tracking-wider">01</span>
-            <h3 class="font-display font-semibold text-white mb-2 text-[15px]">Deploy fix files automatically</h3>
+            <h3 class="font-display font-semibold text-white mb-2 text-[15px]">llms.txt</h3>
             <p class="text-[13px] text-white/50 leading-relaxed">
-              We generate the exact files AI needs. Deploy once and start appearing in AI responses within days.
+              Tell AI agents about your business in their native language. We generate and host the file for you.
             </p>
           </div>
           <div class="border-l border-accent/30 pl-5 group">
             <span class="inline-block font-display font-bold text-accent text-[11px] mb-3 tracking-wider">02</span>
-            <h3 class="font-display font-semibold text-white mb-2 text-[15px]">Know the moment AI finds you</h3>
+            <h3 class="font-display font-semibold text-white mb-2 text-[15px]">Schema.org</h3>
             <p class="text-[13px] text-white/50 leading-relaxed">
-              Track which AI crawlers visit — GPTBot, ClaudeBot, PerplexityBot. Get notified when you appear in results.
+              Structured data AI can read and trust. We audit your JSON-LD and surface exactly what's missing.
             </p>
           </div>
           <div class="border-l border-accent/30 pl-5 group">
             <span class="inline-block font-display font-bold text-accent text-[11px] mb-3 tracking-wider">03</span>
-            <h3 class="font-display font-semibold text-white mb-2 text-[15px]">Weekly re-scans & alerts</h3>
+            <h3 class="font-display font-semibold text-white mb-2 text-[15px]">Agent Simulator</h3>
             <p class="text-[13px] text-white/50 leading-relaxed">
-              Your score is re-checked every week. When something breaks or improves, you're the first to know.
+              Watch ChatGPT navigate your site. See exactly what it reads, skips, and why it recommends your competitors.
             </p>
           </div>
           <div class="border-l border-accent/30 pl-5 group">
             <span class="inline-block font-display font-bold text-accent text-[11px] mb-3 tracking-wider">04</span>
-            <h3 class="font-display font-semibold text-white mb-2 text-[15px]">AI Discovery Test</h3>
+            <h3 class="font-display font-semibold text-white mb-2 text-[15px]">Hosted AI Files</h3>
             <p class="text-[13px] text-white/50 leading-relaxed">
-              We query ChatGPT, Claude, and Perplexity to check if your site actually appears. See exactly where you're found.
+              We serve your AI presence for you. No deployment needed — your llms.txt and schema files stay up to date automatically.
             </p>
           </div>
         </div>
@@ -758,13 +786,13 @@ const openCategory = ref(0)
     <!-- ─── Bottom CTA ─── -->
     <section class="py-24 px-6 lg:px-8 border-t border-border-light bg-warm-50">
       <div class="max-w-2xl mx-auto text-center">
-        <p class="section-label mb-6">Don't wait</p>
+        <p class="section-label mb-6">Free scan</p>
         <h2 class="font-display text-[2rem] sm:text-[2.6rem] font-bold tracking-tight leading-[1.1] mb-5">
-          Your competitors are already<br>
-          optimizing for AI.
+          Check if AI agents can find<br>
+          your website.
         </h2>
         <p class="text-[16px] text-secondary mb-10 max-w-[44ch] mx-auto leading-relaxed">
-          Find out where you stand in 30 seconds. Free, no signup required.
+          Free, 30 seconds. No signup required. See your AI visibility score and exactly what to fix.
         </p>
         <form @submit.prevent="handleScan(domainBottom)" class="group">
           <div class="relative flex items-center max-w-lg mx-auto border border-warm-300 rounded-xl bg-surface transition-all duration-200 focus-within:border-accent focus-within:ring-4 focus-within:ring-accent/10 hover:border-warm-400 shadow-sm">

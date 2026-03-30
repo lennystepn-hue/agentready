@@ -80,6 +80,9 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
 
       <!-- Right: compact group -->
       <div class="flex items-center gap-4 shrink-0">
+        <router-link to="/tools/llms-txt-generator" class="hidden sm:block text-[13px] text-secondary hover:text-primary transition-colors">
+          Tools
+        </router-link>
         <router-link to="/pricing" class="hidden sm:block text-[13px] text-secondary hover:text-primary transition-colors">
           Pricing
         </router-link>

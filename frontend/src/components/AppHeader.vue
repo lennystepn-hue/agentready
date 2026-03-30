@@ -85,7 +85,7 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
         </router-link>
 
         <a
-          href="https://github.com/lennystepn-hue/agentready"
+          href="https://github.com/lennystepn-hue/agentcheck"
           target="_blank"
           rel="noopener"
           class="hidden sm:block text-warm-400 hover:text-secondary transition-colors"

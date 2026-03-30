@@ -840,7 +840,7 @@ onMounted(fetchReport)
             <router-link to="/privacy" class="hover:text-secondary transition-colors">Privacy Policy</router-link>
             <router-link to="/terms" class="hover:text-secondary transition-colors">Terms of Service</router-link>
             <router-link to="/imprint" class="hover:text-secondary transition-colors">Imprint</router-link>
-            <a href="https://github.com/lennystepn-hue/agentready" target="_blank" rel="noopener" class="hover:text-secondary transition-colors">GitHub</a>
+            <a href="https://github.com/lennystepn-hue/agentcheck" target="_blank" rel="noopener" class="hover:text-secondary transition-colors">GitHub</a>
           </div>
         </div>
       </footer>

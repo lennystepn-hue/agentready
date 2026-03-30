@@ -28,7 +28,7 @@ GET /api/health - Health check
 
 ## Links
 - Website: https://agentcheck.site
-- GitHub: https://github.com/lennystepn-hue/agentready
+- GitHub: https://github.com/lennystepn-hue/agentcheck
 - Pricing: https://agentcheck.site/pricing
 
 ## Contact

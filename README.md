@@ -6,7 +6,7 @@
 
 **Free AI visibility scanner — check if ChatGPT, Claude, Perplexity, Gemini, Copilot & Google AI Overview can find your website.**
 
-[Live Scanner](https://agentcheck.site) · [Report a Bug](https://github.com/lennystepn-hue/agentready/issues) · [Request Feature](https://github.com/lennystepn-hue/agentready/issues)
+[Live Scanner](https://agentcheck.site) · [Report a Bug](https://github.com/lennystepn-hue/agentcheck/issues) · [Request Feature](https://github.com/lennystepn-hue/agentcheck/issues)
 
 ---
 
@@ -133,7 +133,7 @@ Top Fixes:
 
 ```bash
 # Clone
-git clone https://github.com/lennystepn-hue/agentready.git
+git clone https://github.com/lennystepn-hue/agentcheck.git
 cd agentready
 
 # Backend
@@ -264,7 +264,7 @@ DATABASE_PATH=/data/agentcheck.db
 
 ```bash
 ssh root@your-server
-git clone https://github.com/lennystepn-hue/agentready.git /opt/agentready
+git clone https://github.com/lennystepn-hue/agentcheck.git /opt/agentready
 cd /opt/agentready
 cp backend/.env.example backend/.env
 # Edit backend/.env with your keys

@@ -253,7 +253,7 @@ defineProps({
         </router-link>
 
         <a
-          href="https://github.com/lennystepn-hue/agentready"
+          href="https://github.com/lennystepn-hue/agentcheck"
           target="_blank"
           rel="noopener"
           class="hidden sm:block text-secondary hover:text-primary transition-colors"

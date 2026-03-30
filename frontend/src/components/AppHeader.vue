@@ -1,4 +1,5 @@
 <script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
 import { isLoggedIn } from '../auth.js'
 import UserDropdown from './UserDropdown.vue'
 
@@ -7,11 +8,47 @@ defineProps({
   backLabel: { type: String, default: 'Back' },
   fullWidth: { type: Boolean, default: false },
 })
+
+const scrollY = ref(0)
+const scrollProgress = ref(0)
+const isScrolled = ref(false)
+
+function onScroll() {
+  scrollY.value = window.scrollY
+  isScrolled.value = window.scrollY > 4
+
+  const docHeight = document.documentElement.scrollHeight - window.innerHeight
+  scrollProgress.value = docHeight > 0
+    ? Math.min(100, (window.scrollY / docHeight) * 100)
+    : 0
+}
+
+onMounted(() => window.addEventListener('scroll', onScroll, { passive: true }))
+onUnmounted(() => window.removeEventListener('scroll', onScroll))
 </script>
 
 <template>
-  <header class="sticky top-0 z-50 bg-page/95 backdrop-blur-sm border-b border-border-light">
-    <div class="h-14 flex items-center justify-between" :class="fullWidth ? 'px-5' : 'max-w-5xl mx-auto px-6 lg:px-8'">
+  <header
+    class="sticky top-0 z-50 border-b transition-all duration-200"
+    :class="[
+      isScrolled ? 'border-border-light shadow-sm' : 'border-transparent',
+    ]"
+    :style="{
+      backgroundColor: isScrolled ? 'rgba(250,250,248,0.90)' : 'rgba(250,250,248,0.95)',
+      backdropFilter: 'blur(8px)',
+    }"
+  >
+    <!-- Scroll progress line -->
+    <div
+      class="absolute top-0 left-0 h-[1.5px] bg-accent transition-none pointer-events-none z-10"
+      :style="{ width: scrollProgress + '%', opacity: scrollProgress > 0 ? 1 : 0 }"
+      aria-hidden="true"
+    />
+
+    <div
+      class="h-14 flex items-center justify-between"
+      :class="fullWidth ? 'px-5' : 'max-w-5xl mx-auto px-6 lg:px-8'"
+    >
       <!-- Left: Logo + back -->
       <div class="flex items-center gap-3">
         <router-link to="/" class="flex items-center gap-2 flex-shrink-0">

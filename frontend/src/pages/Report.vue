@@ -225,6 +225,16 @@ const getFoundStatus = computed(() => {
       found: structuredPct >= 45 && protocolPct >= 40,
       reason: structuredPct < 45 ? 'Schema markup needed' : protocolPct < 40 ? 'Crawl directives missing' : 'Schema & crawl ready',
     },
+    {
+      name: 'Copilot',
+      found: protocolPct >= 55 && structuredPct >= 45,
+      reason: protocolPct < 55 ? 'Missing AI protocols' : structuredPct < 45 ? 'Structured data incomplete' : 'Protocol & schema ready',
+    },
+    {
+      name: 'AI Overview',
+      found: structuredPct >= 55 && trustPct >= 50 && protocolPct >= 45,
+      reason: structuredPct < 55 ? 'Rich schema required' : trustPct < 50 ? 'Trust signals too low' : protocolPct < 45 ? 'Crawl directives missing' : 'Fully discoverable',
+    },
   ]
 })
 

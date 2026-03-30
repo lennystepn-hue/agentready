@@ -134,13 +134,13 @@ const openCategory = ref(0)
             </p>
 
             <h1 class="font-display text-[2.6rem] sm:text-[3.4rem] font-bold tracking-tight leading-[1.05] text-primary">
-              Get your website found<br>
-              by ChatGPT, Claude<br>
-              <span class="text-accent">&amp; Perplexity.</span>
+              AI is recommending<br>
+              your competitors.<br>
+              <span class="text-accent">Not you.</span>
             </h1>
 
             <p class="mt-6 text-[17px] text-secondary leading-relaxed max-w-[46ch]">
-              Free AI visibility scanner — check your score in 30 seconds. No signup required.
+              Free AI visibility scanner — find out if ChatGPT, Claude, Perplexity, Gemini, Copilot & Google AI Overview can find your website. 30 seconds, no signup.
             </p>
 
             <!-- Scan input — unified pill style -->
@@ -510,7 +510,7 @@ const openCategory = ref(0)
               </div>
               <div>
                 <p class="text-[12px] font-display font-semibold text-primary">Your site was mentioned in 3 AI responses this week</p>
-                <p class="text-[10px] text-muted mt-0.5">ChatGPT · Claude · Perplexity</p>
+                <p class="text-[10px] text-muted mt-0.5">ChatGPT · Claude · Perplexity · Gemini · Copilot · AI Overview</p>
               </div>
             </div>
           </div>

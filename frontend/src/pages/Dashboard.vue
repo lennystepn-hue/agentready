@@ -204,10 +204,12 @@ const llmVisibility = computed(() => {
   const s = bestScan.value?.score ?? 0
   const hasFiles = filesActive.value
   return [
-    { name: 'ChatGPT',   visible: s >= 60 && hasFiles },
-    { name: 'Claude',    visible: s >= 55 },
-    { name: 'Perplexity',visible: s >= 50 },
-    { name: 'Gemini',    visible: s >= 65 && hasFiles },
+    { name: 'ChatGPT',    visible: s >= 60 && hasFiles },
+    { name: 'Claude',     visible: s >= 55 },
+    { name: 'Perplexity', visible: s >= 50 },
+    { name: 'Gemini',     visible: s >= 65 && hasFiles },
+    { name: 'Copilot',    visible: s >= 58 && hasFiles },
+    { name: 'AI Overview', visible: s >= 65 && hasFiles },
   ]
 })
 

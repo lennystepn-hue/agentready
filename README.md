@@ -2,18 +2,18 @@
 
 # AgentCheck
 
-### Is your website visible to AI agents?
+### AI is recommending your competitors. Not you.
 
-**The open-source AI agent readiness scanner for any website.**
+**Free AI visibility scanner — check if ChatGPT, Claude, Perplexity, Gemini, Copilot & Google AI Overview can find your website.**
 
 [Live Scanner](https://agentcheck.site) · [Report a Bug](https://github.com/lennystepn-hue/agentready/issues) · [Request Feature](https://github.com/lennystepn-hue/agentready/issues)
 
 ---
 
-ChatGPT, Claude, Gemini, and Perplexity are becoming how people discover businesses, products, and content.
-If your site isn't machine-readable, AI agents will recommend your competitors instead.
+The next generation of customers won't Google you — they'll ask AI.
+AgentCheck scans any website and shows you exactly which AI agents can find you, which can't, and what to fix.
 
-**AgentCheck scans any website and tells you exactly what to fix.**
+**Your GEO & LLM SEO toolkit. Free, open source.**
 
 </div>
 
@@ -21,17 +21,31 @@ If your site isn't machine-readable, AI agents will recommend your competitors i
 
 ## The Problem
 
-AI agents are reshaping how people discover and interact with businesses online. By 2026, AI agents will drive **$20.9 billion** in retail spending alone ([Gartner, 2025](https://www.gartner.com)). But most websites aren't ready:
+AI agents are reshaping discovery. Millions of people skip Google and ask ChatGPT, Claude, or Perplexity for recommendations. If your website isn't machine-readable, you're invisible.
 
 - No `llms.txt` or `ai.txt` — AI agents can't find basic site information
-- Missing or incomplete Schema.org markup — agents can't read structured data
-- No UCP endpoint — no programmatic capabilities for AI agents
+- Missing Schema.org markup — agents can't read structured data
 - JavaScript-only rendering — agents see a blank page
-- No structured conversion paths — agents can't guide users effectively
+- No AI-friendly protocols — you don't exist in the agentic web
 
 **The average website scores below 30/100 on AI agent readiness.**
 
-AgentCheck runs **18+ automated checks** across 5 categories to surface exactly what's broken — and gives you copy-paste code to fix it.
+AgentCheck runs **18+ automated checks** across 5 categories, shows which LLMs can find you, and gives you copy-paste code to fix everything.
+
+---
+
+## Which AI Agents We Check
+
+| AI Agent | What We Test |
+|----------|-------------|
+| **ChatGPT** (OpenAI) | llms.txt, ai.txt, structured data, protocol readiness |
+| **Claude** (Anthropic) | Protocol readiness, agent accessibility, content structure |
+| **Perplexity** | Structured data quality, trust signals, indexability |
+| **Gemini** (Google) | Schema.org markup, crawl directives, structured data |
+| **Copilot** (Microsoft) | AI protocols, structured data completeness |
+| **Google AI Overview** | Schema markup, trust signals, crawl readiness |
+
+Each scan produces a per-agent visibility grid: see exactly which AI can find you and which can't.
 
 ---
 
@@ -55,19 +69,26 @@ Every check produces a **pass**, **warn**, or **fail** with a specific fix sugge
 1. Enter any website URL        →  agentcheck.site
 2. We auto-detect site type     →  e-commerce, blog, SaaS, restaurant, etc.
 3. We run 18+ automated checks  →  ~30 seconds
-4. Get your score + fix report  →  0-100 score, letter grade, prioritized fixes
+4. See which AI agents find you →  ChatGPT ✅, Claude ❌, Perplexity ✅ ...
+5. Get your score + fix report  →  0-100 score, prioritized fixes with code
 ```
 
 ### Example Output
 
 ```
-Domain:     example-site.com
+Domain:     example-store.com
 Type:       E-Commerce (auto-detected)
-Score:      28 / 100
-Grade:      E
+Score:      28 / 100  —  Grade: E
+Visibility: Mostly Hidden
+
+  ChatGPT     ❌  Missing llms.txt
+  Claude      ❌  Protocol readiness too low
+  Perplexity  ⚠️  Weak structured data
+  Gemini      ❌  Schema markup needed
+  Copilot     ❌  Missing AI protocols
+  AI Overview ❌  Trust signals too low
 
 Top Fixes:
-  ✗ CRITICAL  UCP Endpoint missing              (+8 pts)
   ✗ CRITICAL  No Product Schema found            (+6 pts)
   ✗ CRITICAL  No JSON-LD structured data         (+5 pts)
   ⚠ WARNING   No ai.txt file                    (+4 pts)
@@ -76,11 +97,37 @@ Top Fixes:
 
 ---
 
+## Features
+
+### Free
+- AI readiness score (0-100) with letter grade
+- Per-agent visibility grid (ChatGPT, Claude, Perplexity, Gemini, Copilot, AI Overview)
+- Detailed report with 18+ checks across 5 categories
+- Fix suggestions with code snippets
+- Shareable report & badge
+
+### Fix Files ($9 one-time)
+- Ready-to-deploy `llms.txt`, `ai.txt`, Schema.org patches
+- `robots.txt` AI agent rules
+- Step-by-step implementation guide
+
+### Pro ($29/month)
+- **Hosted AI Files** — we serve your llms.txt & ai.txt for you
+- **Agent Simulator** — watch how ChatGPT navigates your site step-by-step
+- **AI Mention Tracking** — see how often LLMs cite your site
+- **Crawler Ping** — notify AI crawlers when you update (3/day)
+- **Competitor Comparison** — benchmark AI visibility vs rivals
+- **Weekly Monitoring** — alerts when your score changes
+- **Score History** — track improvements over time
+- Unlimited fix file downloads
+
+---
+
 ## Quick Start
 
 ### Try It Online
 
-**[agentcheck.site](https://agentcheck.site)** — free, no registration required.
+**[agentcheck.site](https://agentcheck.site)** — free, no signup required.
 
 ### Run Locally
 
@@ -140,7 +187,6 @@ All endpoints are available at `https://agentcheck.site/api/`.
 | `GET` | `/api/health` | Health check |
 | `POST` | `/api/scan` | Start a new scan |
 | `GET` | `/api/scan/{id}` | Get scan status/result |
-| `GET` | `/api/pricing` | Get pricing plans |
 
 ### Authenticated Endpoints
 
@@ -150,16 +196,18 @@ All endpoints are available at `https://agentcheck.site/api/`.
 | `POST` | `/api/auth/login` | Sign in |
 | `GET` | `/api/auth/me` | Get current user |
 | `GET` | `/api/user/scans` | List user's scans |
-| `GET` | `/api/scan/{id}/fixes` | Get tailored fix files (paid) |
 | `GET` | `/api/scan/{id}/fixes/download` | Download fix ZIP (paid) |
 | `POST` | `/api/compare` | Compare up to 4 domains (Pro) |
 | `GET` | `/api/history/{domain}` | Score history (Pro) |
 | `GET` | `/api/monitoring` | List monitored domains (Pro) |
 | `POST` | `/api/monitoring` | Add domain to monitoring (Pro) |
+| `POST` | `/api/hosted-files/activate` | Activate hosted AI files (Pro) |
+| `POST` | `/api/crawler-ping` | Ping AI crawlers (Pro, 3/day) |
+| `POST` | `/api/simulate/{scanId}` | Run agent simulator (Pro) |
 | `POST` | `/api/checkout/session` | Create Stripe checkout |
-| `POST` | `/api/billing/portal` | Stripe billing portal (Pro) |
+| `POST` | `/api/billing/portal` | Stripe billing portal |
 
-### Scan Request Example
+### Scan Example
 
 ```bash
 curl -X POST https://agentcheck.site/api/scan \
@@ -167,7 +215,6 @@ curl -X POST https://agentcheck.site/api/scan \
   -d '{"domain": "your-website.com"}'
 ```
 
-Response:
 ```json
 {
   "scan_id": "a1b2c3d4-...",
@@ -178,36 +225,51 @@ Response:
 
 ---
 
-## Pricing
-
-| | Free | Fix Files | Pro |
-|---|---|---|---|
-| **Price** | $0 | $9 one-time | $29/month |
-| Scan + Score + Report | ✓ | ✓ | ✓ |
-| Generic fix suggestions | ✓ | ✓ | ✓ |
-| Shareable badge | ✓ | ✓ | ✓ |
-| **Tailored fix files** (ai.txt, llms.txt, Schema, UCP) | — | 1 scan | Unlimited |
-| **Implementation guide** | — | ✓ | ✓ |
-| Weekly monitoring + alerts | — | — | ✓ |
-| Competitor comparison | — | — | ✓ |
-| Score history | — | — | ✓ |
-| AI bot traffic tracking | — | — | ✓ |
-
----
-
 ## Fix Files — What You Get
-
-When you purchase fix files for a scan, you receive a ZIP containing:
 
 | File | Description |
 |------|-------------|
-| `ai.txt` | AI agent instructions, tailored to your site type |
-| `llms.txt` | LLM context file describing your site and its content |
-| `robots_txt_additions.txt` | Rules to add for GPTBot, ClaudeBot, PerplexityBot, etc. |
-| `ucp.json` | Universal Commerce Protocol endpoint configuration |
-| `schema_*.jsonld` | Schema template matching your site type (Product, Article, Restaurant, etc.) |
+| `llms.txt` | LLM context file describing your site — tailored to your site type |
+| `ai.txt` | AI agent instructions with capabilities and endpoints |
+| `robots_txt_additions.txt` | Rules for GPTBot, ClaudeBot, PerplexityBot, Google-Extended |
+| `schema_*.jsonld` | Schema.org template matching your site type (Product, Article, Restaurant, etc.) |
 | `schema_organization.jsonld` | Organization Schema for your business |
-| `implementation_guide.md` | Step-by-step deploy guide (Shopify, WooCommerce, custom) |
+| `implementation_guide.md` | Step-by-step deploy guide (Shopify, WooCommerce, WordPress, custom) |
+
+---
+
+## Self-Hosting
+
+AgentCheck is fully open source and designed to be self-hosted.
+
+### Requirements
+
+- VPS with 2+ GB RAM (Hetzner CX22 recommended, ~€4.50/month)
+- Docker + Docker Compose
+- Domain with DNS pointing to your server
+
+### Environment Variables
+
+```env
+JWT_SECRET=<generate: python -c "import secrets; print(secrets.token_urlsafe(32))">
+STRIPE_SECRET_KEY=sk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PRICE_FIX_FILES=price_...
+STRIPE_PRICE_PRO=price_...
+FRONTEND_URL=https://your-domain.com
+DATABASE_PATH=/data/agentcheck.db
+```
+
+### Deploy
+
+```bash
+ssh root@your-server
+git clone https://github.com/lennystepn-hue/agentready.git /opt/agentready
+cd /opt/agentready
+cp backend/.env.example backend/.env
+# Edit backend/.env with your keys
+bash deploy.sh
+```
 
 ---
 
@@ -248,52 +310,40 @@ agentready/
 
 ---
 
-## Self-Hosting
-
-AgentCheck is fully open source and designed to be self-hosted.
-
-### Requirements
-
-- VPS with 2+ GB RAM (Hetzner CX22 recommended, ~€4.50/month)
-- Docker + Docker Compose
-- Domain with DNS pointing to your server
-
-### Environment Variables
-
-```env
-JWT_SECRET=<generate: python -c "import secrets; print(secrets.token_urlsafe(32))">
-STRIPE_SECRET_KEY=sk_live_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-STRIPE_PRICE_FIX_FILES=price_...
-STRIPE_PRICE_PRO=price_...
-FRONTEND_URL=https://your-domain.com
-DATABASE_PATH=/data/agentcheck.db
-```
-
-### Deploy
-
-```bash
-ssh root@your-server
-git clone https://github.com/lennystepn-hue/agentready.git /opt/agentready
-cd /opt/agentready
-cp backend/.env.example backend/.env
-# Edit backend/.env with your keys
-bash deploy.sh
-```
-
-The script installs Docker, builds containers, obtains SSL certificates, and starts everything.
-
----
-
 ## Related Standards & Protocols
 
 AgentCheck evaluates compatibility with these emerging AI standards:
 
 - **[llms.txt](https://llmstxt.org)** — Markdown files that help LLMs understand your site
 - **[ai.txt](https://ai-txt.org)** — AI agent instruction files (like robots.txt for AI)
-- **[Schema.org](https://schema.org)** — Structured data vocabulary for products, articles, businesses, and more
-- **[UCP (Universal Commerce Protocol)](https://www.ucprotocol.com)** — Programmatic commerce endpoint specification
+- **[Schema.org](https://schema.org)** — Structured data vocabulary for products, articles, businesses
+- **[UCP](https://www.ucprotocol.com)** — Universal Commerce Protocol for programmatic AI commerce
 - **robots.txt AI directives** — Crawl rules for GPTBot, ClaudeBot, PerplexityBot, Google-Extended
+
+---
+
+## FAQ
+
+**Is this free?**
+Yes. The scanner and reports are free forever. Fix files and monitoring are paid.
+
+**What is GEO (Generative Engine Optimization)?**
+GEO is the practice of optimizing your website to be discovered by AI agents and generative search engines. AgentCheck is a free GEO scanner.
+
+**How accurate is the score?**
+The score measures technical readiness signals that AI agents look for. Sites with higher scores are significantly more likely to be found and recommended by ChatGPT, Claude, Perplexity, and other AI agents.
+
+**Which AI agents does this cover?**
+ChatGPT (OpenAI), Claude (Anthropic), Perplexity, Gemini (Google), Copilot (Microsoft), Google AI Overview, and any agent that follows standard web protocols.
+
+**How is this different from SEO tools?**
+Traditional SEO optimizes for Google crawlers. AgentCheck focuses on GEO and LLM SEO — optimizing for AI agents which read structured data, llms.txt, ai.txt, and machine-readable formats that search crawlers ignore.
+
+**Can I self-host this?**
+Yes. AgentCheck is MIT licensed and fully self-hostable. See the Self-Hosting section.
+
+**What types of websites does this support?**
+Auto-detects your site type: e-commerce, SaaS, blogs, restaurants, local businesses, professional services, portfolios, and more.
 
 ---
 
@@ -317,31 +367,9 @@ cd ../frontend && npm run dev
 
 ---
 
-## FAQ
-
-**Is this free?**
-Yes. The scanner and reports are free forever. Tailored fix files and monitoring are paid.
-
-**How accurate is the score?**
-The score measures technical readiness signals that AI agents look for. It doesn't guarantee placement in AI responses, but sites with higher scores are significantly more likely to be found and recommended.
-
-**Which AI agents does this cover?**
-ChatGPT (OpenAI), Claude (Anthropic), Gemini (Google), Perplexity, and any agent that follows standard web protocols.
-
-**Can I run this on my own server?**
-Yes. AgentCheck is MIT licensed and fully self-hostable. See the Self-Hosting section above.
-
-**What types of websites does this support?**
-AgentCheck auto-detects your site type and adjusts checks accordingly. Supported types include e-commerce, blogs/news, SaaS, restaurants, local businesses, professional services, and portfolios/agencies.
-
-**How is this different from regular SEO tools?**
-Traditional SEO tools optimize for search engine crawlers. AgentCheck optimizes for AI agents — which read structured data, API endpoints, and machine-readable files that search crawlers ignore.
-
----
-
 ## Keywords
 
-`ai agent readiness` `ai seo` `website ai readiness` `ai visibility for websites` `blog ai optimization` `saas ai optimization` `ecommerce ai optimization` `llms.txt` `ai.txt` `schema.org checker` `structured data validator` `ai agent visibility` `chatgpt` `claude` `ai product discovery` `machine readable website` `ucp protocol` `agent commerce protocol` `ai bot optimization` `is my site reachable for ai` `ai search optimization` `website ai scanner` `restaurant ai` `local business ai`
+`AI agent readiness scanner` `GEO tool` `generative engine optimization` `LLM SEO` `AI visibility checker` `ChatGPT SEO` `AI search optimization` `llms.txt generator` `ai.txt checker` `Schema.org validator` `AI readiness score` `website AI scanner` `Perplexity SEO` `Claude AI discovery` `Copilot optimization` `Google AI Overview` `AEO` `AI engine optimization` `get found by AI` `AI commerce` `agentic web` `agent-ready website`
 
 ---
 
@@ -353,7 +381,7 @@ Traditional SEO tools optimize for search engine crawlers. AgentCheck optimizes 
 
 <div align="center">
 
-**[Try AgentCheck Now](https://agentcheck.site)** — Free, no signup required.
+**[Scan your website now](https://agentcheck.site)** — free, 30 seconds, no signup.
 
 Built by [Lenny Enderle](https://github.com/lennystepn-hue)
 

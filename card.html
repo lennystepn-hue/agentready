@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --teal: #0D7377;
+    --teal-bright: #14B8BC;
+    --teal-dim: #0A5C5F;
+    --bg-deep: #080F11;
+    --bg-card: #0C1618;
+    --surface: #121F22;
+    --text-primary: #E8EDED;
+    --text-secondary: #8A9B9E;
+    --text-muted: #5A6E72;
+    --accent-warm: #F0C987;
+  }
+
+  body {
+    width: 1200px;
+    height: 630px;
+    overflow: hidden;
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .card {
+    width: 1200px;
+    height: 630px;
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    grid-template-rows: 1fr auto;
+  }
+
+  /* === Ambient background === */
+  .card::before {
+    content: '';
+    position: absolute;
+    top: -120px;
+    right: -80px;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(13,115,119,0.12) 0%, transparent 65%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .card::after {
+    content: '';
+    position: absolute;
+    bottom: -200px;
+    left: -100px;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(13,115,119,0.06) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* === Top accent stripe === */
+  .stripe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--teal-dim), var(--teal-bright), var(--teal-dim));
+    z-index: 10;
+  }
+
+  /* === Grid noise texture === */
+  .texture {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    opacity: 0.35;
+    background-image:
+      linear-gradient(rgba(13,115,119,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(13,115,119,0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  /* === Left content === */
+  .content {
+    position: relative;
+    z-index: 2;
+    padding: 68px 0 0 72px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 0;
+  }
+
+  .eyebrow {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--teal-bright);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 24px;
+    height: 1px;
+    background: var(--teal-bright);
+  }
+
+  .headline {
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1.12;
+    letter-spacing: -1.5px;
+    color: var(--text-primary);
+    max-width: 620px;
+  }
+
+  .headline em {
+    font-style: normal;
+    color: var(--teal-bright);
+    position: relative;
+  }
+
+  .headline em::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 2px;
+    width: 100%;
+    height: 3px;
+    background: var(--teal-bright);
+    opacity: 0.4;
+    border-radius: 2px;
+  }
+
+  .subtitle {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--text-secondary);
+    margin-top: 22px;
+    letter-spacing: -0.2px;
+  }
+
+  .cta-row {
+    margin-top: 36px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .cta-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 28px;
+    background: var(--teal);
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: -0.2px;
+  }
+
+  .cta-pill svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .cta-meta {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text-muted);
+    letter-spacing: 0.2px;
+  }
+
+  .cta-meta span {
+    color: var(--text-secondary);
+  }
+
+  /* === Right: Score === */
+  .score-area {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-right: 40px;
+    padding-bottom: 24px;
+  }
+
+  .score-ring {
+    position: relative;
+    width: 210px;
+    height: 210px;
+  }
+
+  .score-ring svg {
+    width: 210px;
+    height: 210px;
+    transform: rotate(-90deg);
+  }
+
+  .ring-track {
+    fill: none;
+    stroke: var(--surface);
+    stroke-width: 8;
+  }
+
+  .ring-progress {
+    fill: none;
+    stroke: url(#tealGrad);
+    stroke-width: 8;
+    stroke-linecap: round;
+    stroke-dasharray: 565.48;
+    stroke-dashoffset: 73.51; /* 100 - 87 = 13% of 565.48 */
+  }
+
+  .ring-glow {
+    fill: none;
+    stroke: var(--teal-bright);
+    stroke-width: 12;
+    stroke-linecap: round;
+    stroke-dasharray: 565.48;
+    stroke-dashoffset: 73.51;
+    opacity: 0.15;
+    filter: blur(6px);
+  }
+
+  .score-value {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .score-number {
+    font-size: 72px;
+    font-weight: 700;
+    letter-spacing: -3px;
+    line-height: 1;
+    color: var(--text-primary);
+  }
+
+  .score-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  .score-caption {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--teal-bright);
+    margin-top: 18px;
+  }
+
+  /* === Bottom bar === */
+  .bottom-bar {
+    grid-column: 1 / -1;
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 72px 0 72px;
+    height: 72px;
+    border-top: 1px solid rgba(13,115,119,0.15);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .brand-icon {
+    width: 32px;
+    height: 32px;
+    background: var(--teal);
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .brand-icon svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: #fff;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .brand-name {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--text-primary);
+  }
+
+  .brand-url {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: var(--text-muted);
+    letter-spacing: 0.3px;
+  }
+
+  .checks-row {
+    display: flex;
+    gap: 6px;
+  }
+
+  .check-tag {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    padding: 5px 12px;
+    background: rgba(13,115,119,0.08);
+    border: 1px solid rgba(13,115,119,0.15);
+    border-radius: 4px;
+    letter-spacing: 0.2px;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="stripe"></div>
+  <div class="texture"></div>
+
+  <div class="content">
+    <div class="eyebrow">AI Visibility Alert</div>
+    <h1 class="headline">
+      Right now, AI is<br>recommending<br><em>your competitors.</em>
+    </h1>
+    <p class="subtitle">Is your website visible to AI agents?</p>
+    <div class="cta-row">
+      <div class="cta-pill">
+        <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        Free scan in 30 seconds
+      </div>
+      <div class="cta-meta"><span>No signup required</span></div>
+    </div>
+  </div>
+
+  <div class="score-area">
+    <div class="score-ring">
+      <svg viewBox="0 0 210 210">
+        <defs>
+          <linearGradient id="tealGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#14B8BC"/>
+            <stop offset="100%" stop-color="#0A5C5F"/>
+          </linearGradient>
+        </defs>
+        <circle class="ring-glow" cx="105" cy="105" r="90"/>
+        <circle class="ring-track" cx="105" cy="105" r="90"/>
+        <circle class="ring-progress" cx="105" cy="105" r="90"/>
+      </svg>
+      <div class="score-value">
+        <div class="score-number">87</div>
+        <div class="score-label">out of 100</div>
+      </div>
+    </div>
+    <div class="score-caption">AI Visibility Score</div>
+  </div>
+
+  <div class="bottom-bar">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+      </div>
+      <span class="brand-name">AgentCheck</span>
+      <span class="brand-url">agentcheck.site</span>
+    </div>
+    <div class="checks-row">
+      <span class="check-tag">llms.txt</span>
+      <span class="check-tag">Schema.org</span>
+      <span class="check-tag">ai.txt</span>
+      <span class="check-tag">Robots</span>
+      <span class="check-tag">+14 more</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>
